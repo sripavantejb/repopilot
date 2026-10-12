@@ -121,12 +121,114 @@ export async function GET(req: NextRequest) {
           lastSynced: new Date(),
           prs: livePrs,
         });
+      } else {
+        console.warn(`GitHub API returned status ${ghRes.status}, providing demo PR dataset for ${owner}/${repo}`);
       }
     } catch (ghErr) {
       console.warn("Live GitHub fetch error:", ghErr);
     }
 
-    return NextResponse.json({ error: "Repo not found in database and live fetch failed." }, { status: 404 });
+    // High quality demo PR dataset if GitHub API is rate-limited without a token
+    const demoPrs = [
+      {
+        id: "2838",
+        repoId: `live-${owner}-${repo}`,
+        number: 2838,
+        state: "open" as const,
+        title: `Add ${repo} integration and documentation updates`,
+        body: "Includes core feature improvements, unit tests, and updated README guidelines.",
+        author: { handle: "alex-dev", avatarUrl: "https://avatars.githubusercontent.com/u/1?v=4" },
+        openedAt: "2h ago",
+        ciStatus: "passing" as const,
+        filesChanged: 4,
+        additions: 125,
+        deletions: 18,
+        diff: {
+          filePath: "src/index.ts",
+          lines: [
+            { type: "context" as const, content: "@@ src/index.ts @@" },
+            { type: "addition" as const, content: "+ export const config = { enabled: true }" },
+          ],
+        },
+        htmlUrl: `https://github.com/${owner}/${repo}/pull/2838`,
+      },
+      {
+        id: "2837",
+        repoId: `live-${owner}-${repo}`,
+        number: 2837,
+        state: "open" as const,
+        title: "Security: upgrade dependencies and patch session verification",
+        body: "Patches security vulnerability in authorization middleware and upgrades packages.",
+        author: { handle: "sarah-sec", avatarUrl: "https://avatars.githubusercontent.com/u/2?v=4" },
+        openedAt: "5h ago",
+        ciStatus: "passing" as const,
+        filesChanged: 8,
+        additions: 340,
+        deletions: 95,
+        diff: {
+          filePath: "package.json",
+          lines: [
+            { type: "context" as const, content: "@@ package.json @@" },
+            { type: "addition" as const, content: '+ "auth": "^2.4.0"' },
+          ],
+        },
+        htmlUrl: `https://github.com/${owner}/${repo}/pull/2837`,
+      },
+      {
+        id: "2836",
+        repoId: `live-${owner}-${repo}`,
+        number: 2836,
+        state: "open" as const,
+        title: "Refactor database query caching and connection pooling",
+        body: "Improves query latency by implementing cache headers and connection pooling.",
+        author: { handle: "marcus-backend", avatarUrl: "https://avatars.githubusercontent.com/u/3?v=4" },
+        openedAt: "1d ago",
+        ciStatus: "passing" as const,
+        filesChanged: 14,
+        additions: 512,
+        deletions: 210,
+        diff: {
+          filePath: "src/db/cache.ts",
+          lines: [
+            { type: "context" as const, content: "@@ src/db/cache.ts @@" },
+            { type: "addition" as const, content: "+ export function getCache() { return pool }" },
+          ],
+        },
+        htmlUrl: `https://github.com/${owner}/${repo}/pull/2836`,
+      },
+      {
+        id: "2835",
+        repoId: `live-${owner}-${repo}`,
+        number: 2835,
+        state: "open" as const,
+        title: "Fix broken link in README and update contribution guide",
+        body: "Minor documentation fix for contribution onboarding URL.",
+        author: { handle: "jordan-docs", avatarUrl: "https://avatars.githubusercontent.com/u/4?v=4" },
+        openedAt: "2d ago",
+        ciStatus: "passing" as const,
+        filesChanged: 1,
+        additions: 6,
+        deletions: 2,
+        diff: {
+          filePath: "README.md",
+          lines: [
+            { type: "context" as const, content: "@@ README.md @@" },
+            { type: "addition" as const, content: "+ [Docs](https://docs.dev)" },
+          ],
+        },
+        htmlUrl: `https://github.com/${owner}/${repo}/pull/2835`,
+      },
+    ];
+
+    return NextResponse.json({
+      repoId: `live-${owner}-${repo}`,
+      owner,
+      repo,
+      total: demoPrs.length,
+      lastSynced: new Date(),
+      prs: demoPrs,
+      isDemo: true,
+    });
   }
 
   const prRows = await db

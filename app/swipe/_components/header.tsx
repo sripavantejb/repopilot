@@ -46,9 +46,17 @@ export function Header({ currentPR, totalPRs, streak, defaultRepo = '', apiKey =
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 lg:px-8">
       {/* Left: Wordmark */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[#22C55E] text-lg">•</span>
-        <span className="font-mono text-lg font-bold tracking-tight text-foreground">SwiPR</span>
+      <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-1.5 font-mono text-lg font-bold tracking-tight text-foreground">
+          <span className="text-[#22C55E] text-lg">•</span>
+          <span>RepoPilot</span>
+        </Link>
+        <Link
+          href={repo ? `/diagram?repo=${encodeURIComponent(repo)}` : '/diagram'}
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 font-mono text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
+        >
+          <span>Architecture Graph</span>
+        </Link>
       </div>
 
       {/* Center: Repo input */}

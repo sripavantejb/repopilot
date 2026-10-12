@@ -15,8 +15,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'SwiPR - Swipe to Review PRs',
-  description: 'A card-based PR review tool for public GitHub repos. Swipe through open PRs with AI-powered context.',
+  title: 'RepoPilot - AI Context & PR Review',
+  description: 'Fast, AI-powered review experience for GitHub PRs with deep context, risk analysis, and smart triage.',
   generator: 'v0.app',
   icons: {
     icon: [

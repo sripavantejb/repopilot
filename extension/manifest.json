@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "RepoPilot - GitHub AI Review & Context Side Panel",
+  "version": "1.0.0",
+  "description": "Automatically opens RepoPilot in the Chrome side panel when viewing GitHub repositories, PRs, and issues.",
+  "permissions": [
+    "sidePanel",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://github.com/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "Open RepoPilot Side Panel"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

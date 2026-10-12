@@ -194,13 +194,13 @@ export default function SwipePage() {
   // BYOK — Anthropic key stored in localStorage, passed as header to /api/chat
   const [userApiKey, setUserApiKey] = useState('')
   useEffect(() => {
-    const stored = localStorage.getItem('swipr:apiKey') ?? ''
+    const stored = localStorage.getItem('repopilot:apiKey') ?? ''
     setUserApiKey(stored)
   }, [])
   const handleApiKeyChange = (key: string) => {
     setUserApiKey(key)
-    if (key) localStorage.setItem('swipr:apiKey', key)
-    else localStorage.removeItem('swipr:apiKey')
+    if (key) localStorage.setItem('repopilot:apiKey', key)
+    else localStorage.removeItem('repopilot:apiKey')
   }
 
   // Streak + stats
@@ -376,6 +376,17 @@ export default function SwipePage() {
     const hit = await loadFromCache(repoStr)
     if (!hit) await loadRepo(repoStr)
   }, [loadFromCache, loadRepo])
+
+  // Support ?repo=owner/repo in URL (useful for Chrome Extension & deep links)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const repoParam = params.get('repo')
+      if (repoParam && !repoInput && prList.length === 0) {
+        handleRepoSubmit(repoParam)
+      }
+    }
+  }, [handleRepoSubmit, repoInput, prList.length])
 
   // Load context + impact map when PR changes — both fire in parallel
   useEffect(() => {

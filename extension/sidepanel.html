@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RepoPilot Side Panel</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: #18181b;
+      --border: #27272a;
+      --text: #fafafa;
+      --muted: #a1a1aa;
+      --accent: #22c55e;
+      --accent-hover: #16a34a;
+      --accent-diagram: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(24, 24, 27, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      background: var(--accent);
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: #3f3f46;
+    }
+
+    /* Mode Navigation Tabs */
+    .mode-bar {
+      display: flex;
+      background: #121215;
+      border-bottom: 1px solid var(--border);
+      padding: 4px 10px;
+      gap: 6px;
+    }
+
+    .mode-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .mode-tab.active {
+      color: #ffffff;
+      background: #27272a;
+    }
+
+    .mode-tab.active.diagram-tab {
+      background: rgba(59, 130, 246, 0.18);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+    }
+
+    .mode-tab.active.pr-tab {
+      background: rgba(34, 197, 94, 0.18);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+
+    .status-bar {
+      padding: 6px 14px;
+      background: #0d0d10;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .repo-pill {
+      color: var(--accent);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 600;
+    }
+
+    .frame-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #000;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    iframe.loaded {
+      opacity: 1;
+    }
+
+    .empty-state {
+      padding: 32px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 80%;
+      gap: 12px;
+    }
+
+    .empty-state h3 {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .empty-state p {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 270px;
+      line-height: 1.5;
+    }
+
+    .open-btn {
+      margin-top: 6px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .open-btn:hover {
+      background: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>RepoPilot</span>
+      <span class="brand-badge">Engine</span>
+    </div>
+    <div class="controls">
+      <button id="refresh-btn" class="icon-btn" title="Reload View">↻</button>
+      <button id="popout-btn" class="icon-btn" title="Open in dedicated tab">↗ Tab</button>
+    </div>
+  </header>
+
+  <!-- Dual Mode Bar: Architecture Diagram vs PR/Issue Triage -->
+  <div class="mode-bar">
+    <button id="tab-diagram" class="mode-tab diagram-tab">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+      </svg>
+      <span>Git Architecture</span>
+    </button>
+    <button id="tab-prs" class="mode-tab pr-tab">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="18" cy="18" r="3"></circle>
+        <circle cx="6" cy="6" r="3"></circle>
+        <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
+        <line x1="6" y1="9" x2="6" y2="21"></line>
+      </svg>
+      <span>PR & Issue Triage</span>
+    </button>
+  </div>
+
+  <div class="status-bar">
+    <span>Repo: <span id="current-repo" class="repo-pill">None</span></span>
+    <span id="page-tag">Auto-Detecting</span>
+  </div>
+
+  <div class="frame-container" id="frame-container">
+    <div class="empty-state" id="empty-state">
+      <h3>No GitHub Repo Detected</h3>
+      <p>Navigate to any GitHub repository or Issues page to auto-activate RepoPilot.</p>
+      <button id="default-demo-btn" class="open-btn">Open Demo</button>
+    </div>
+    <iframe id="repopilot-frame" src="about:blank"></iframe>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

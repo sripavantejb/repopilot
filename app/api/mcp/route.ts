@@ -1,12 +1,12 @@
 /**
- * SwiPR MCP server — 12 tools split into surface (4), deeper (6), state (2).
+ * RepoPilot MCP server — 12 tools split into surface (4), deeper (6), state (2).
  *
  * Surface tools are auto-called when a card becomes active.
  * Deeper tools are called on demand via quick-action buttons or free-text chat.
  * State tools capture decisions and session summaries.
  *
  * Claude Desktop / Cursor config:
- *   { "mcpServers": { "swipr": { "url": "https://<your-deployment>.vercel.app/api/mcp" } } }
+ *   { "mcpServers": { "repopilot": { "url": "https://<your-deployment>.vercel.app/api/mcp" } } }
  */
 
 import { createMcpHandler } from "mcp-handler";
@@ -52,7 +52,7 @@ const handler = createMcpHandler(
 
     server.tool(
       "lookup_pr",
-      "Resolve a GitHub PR (owner, repo, number) to its SwiPR internal pr_id and basic metadata. Always call this first when the user refers to a PR by owner/repo#number.",
+      "Resolve a GitHub PR (owner, repo, number) to its RepoPilot internal pr_id and basic metadata. Always call this first when the user refers to a PR by owner/repo#number.",
       {
         owner: z.string(),
         repo: z.string(),
@@ -66,7 +66,7 @@ const handler = createMcpHandler(
           .limit(1);
 
         if (!repoRow) {
-          return ok({ error: `Repo ${owner}/${repo} not found in SwiPR. It may need to be ingested first.` });
+          return ok({ error: `Repo ${owner}/${repo} not found in RepoPilot. It may need to be ingested first.` });
         }
 
         const [pr] = await db
@@ -500,7 +500,7 @@ const handler = createMcpHandler(
     );
   },
   {
-    serverInfo: { name: "swipr", version: "0.1.0" },
+    serverInfo: { name: "repopilot", version: "0.1.0" },
   },
   {
     basePath: "/api",

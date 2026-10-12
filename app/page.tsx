@@ -12,9 +12,15 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-full bg-[#22C55E]" />
-            <span className="text-xl font-semibold tracking-tight text-foreground">SwiPR</span>
+            <span className="text-xl font-semibold tracking-tight text-foreground">RepoPilot</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/diagram"
+              className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+            >
+              Architecture Diagram
+            </Link>
             <ThemeToggle />
             <Link
               href="/swipe"
@@ -33,25 +39,31 @@ export default function LandingPage() {
         <div className="relative mx-auto max-w-6xl px-4 py-24 text-center sm:py-32">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-1.5 text-sm text-muted-foreground">
             <GitPullRequest className="h-4 w-4" />
-            Open source PR review tool
+            Unified GitHub Intelligence & Review Tool
           </div>
           <h1 className="mx-auto max-w-4xl text-balance text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
-            Swipe through PRs like you&apos;re on a dating app
+            Triage & review GitHub PRs with AI autopilot
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground sm:text-xl">
-            A card-based review experience for public GitHub repos. Get AI-powered context, 
-            keyboard shortcuts, and a satisfying swipe interaction for every review.
+            An intelligent card-based review experience for GitHub repositories. Get instant AI context, 
+            risk scoring, codebase architecture graphs, and keyboard-driven decision flow.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/swipe"
               className="flex items-center gap-2 rounded-full bg-[#22C55E] px-8 py-3 text-base font-semibold text-white shadow-lg shadow-[#22C55E]/20 transition-all hover:shadow-xl hover:shadow-[#22C55E]/30"
             >
-              Try SwiPR Now
+              Review PRs
               <ArrowRight className="h-5 w-5" />
             </Link>
+            <Link
+              href="/diagram"
+              className="flex items-center gap-2 rounded-full border border-blue-500/40 bg-blue-500/10 px-8 py-3 text-base font-semibold text-blue-400 transition hover:bg-blue-500/20"
+            >
+              Explore Architecture
+            </Link>
             <a
-              href="https://github.com/nochinxx/SwiPR"
+              href="https://github.com/sripavantejb/RepoPilot"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-full border border-border bg-secondary px-8 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary/80"
@@ -133,8 +145,8 @@ export default function LandingPage() {
             />
             <StepCard
               number="2"
-              title="Swipe through PRs"
-              description="Review each PR with swipe gestures or keyboard shortcuts"
+              title="Review with RepoPilot"
+              description="Review each PR with AI cards, hotkeys, or intuitive triage gestures"
             />
             <StepCard
               number="3"
@@ -169,7 +181,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
-            <span className="text-sm font-medium">SwiPR</span>
+            <span className="text-sm font-medium">RepoPilot</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Built for the open source community

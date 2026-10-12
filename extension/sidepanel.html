@@ -158,7 +158,135 @@
       width: 100%;
       height: 100%;
       position: relative;
-      background: #000;
+      background: #FDF8F0;
+    }
+
+    /* Animated RepoPilot Theme Loader */
+    .loader-overlay {
+      position: absolute;
+      inset: 0;
+      background: #FDF8F0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      opacity: 1;
+      visibility: visible;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .loader-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      background: rgba(180, 199, 239, 0.35);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+
+    .loader-pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #2E7D32;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+
+    .loader-icon-container {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .loader-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 0, 0, 0.06);
+      border-top-color: #1a1a1a;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: -0.04em;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .loader-title {
+      font-family: Georgia, serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .loader-desc {
+      font-size: 12px;
+      color: #666666;
+      max-width: 240px;
+      line-height: 1.5;
+    }
+
+    .loader-progress-track {
+      width: 140px;
+      height: 3px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 3px;
+      margin-top: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .loader-progress-bar {
+      position: absolute;
+      height: 100%;
+      width: 40%;
+      background: #1a1a1a;
+      border-radius: 3px;
+      animation: progressSlide 1.4s ease-in-out infinite;
+    }
+
+    @keyframes progressSlide {
+      0% { left: -40%; width: 30%; }
+      50% { width: 50%; }
+      100% { left: 100%; width: 30%; }
     }
 
     iframe {
@@ -166,7 +294,7 @@
       height: 100%;
       border: none;
       opacity: 0;
-      transition: opacity 0.2s ease-in-out;
+      transition: opacity 0.3s ease-in-out;
     }
 
     iframe.loaded {
@@ -253,7 +381,24 @@
   </div>
 
   <div class="frame-container" id="frame-container">
-    <div class="empty-state" id="empty-state">
+    {/* Animated Litigo / RepoPilot Loader */}
+    <div class="loader-overlay" id="loader-overlay">
+      <div class="loader-badge">
+        <span class="loader-pulse-dot"></span>
+        <span id="loader-mode-badge">RepoPilot Autopilot</span>
+      </div>
+      <div class="loader-icon-container">
+        <div class="loader-ring"></div>
+        <div class="loader-logo">RP</div>
+      </div>
+      <div class="loader-title" id="loader-title">Analyzing Repository</div>
+      <div class="loader-desc" id="loader-desc">Building codebase AST graph & live PR triage...</div>
+      <div class="loader-progress-track">
+        <div class="loader-progress-bar"></div>
+      </div>
+    </div>
+
+    <div class="empty-state" id="empty-state" style="display: none;">
       <h3>No GitHub Repo Detected</h3>
       <p>Navigate to any GitHub repository or Issues page to auto-activate RepoPilot.</p>
       <button id="default-demo-btn" class="open-btn">Open Demo</button>

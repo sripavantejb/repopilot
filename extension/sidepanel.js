@@ -6,6 +6,11 @@ let APP_BASE_URL = PROD_BASE_URL;
 
 const frame = document.getElementById("repopilot-frame");
 const emptyState = document.getElementById("empty-state");
+const loaderOverlay = document.getElementById("loader-overlay");
+const loaderTitle = document.getElementById("loader-title");
+const loaderDesc = document.getElementById("loader-desc");
+const loaderModeBadge = document.getElementById("loader-mode-badge");
+
 const currentRepoEl = document.getElementById("current-repo");
 const pageTagEl = document.getElementById("page-tag");
 const popoutBtn = document.getElementById("popout-btn");
@@ -18,10 +23,29 @@ const tabPRs = document.getElementById("tab-prs");
 let activeRepoFullName = null;
 let currentMode = "prs"; // 'diagram' | 'prs'
 
+function showLoader(title, desc, badge) {
+  if (loaderOverlay) {
+    if (title && loaderTitle) loaderTitle.textContent = title;
+    if (desc && loaderDesc) loaderDesc.textContent = desc;
+    if (badge && loaderModeBadge) loaderModeBadge.textContent = badge;
+    loaderOverlay.classList.remove("hidden");
+  }
+}
+
+function hideLoader() {
+  if (loaderOverlay) {
+    loaderOverlay.classList.add("hidden");
+  }
+}
+
 // Handle iframe smooth load transition
 frame.addEventListener("load", () => {
-  if (frame.src !== "about:blank") {
+  if (frame.src && frame.src !== "about:blank") {
     frame.classList.add("loaded");
+    // Brief settle time for app hydration
+    setTimeout(() => {
+      hideLoader();
+    }, 250);
   }
 });
 
@@ -39,6 +63,7 @@ function setMode(mode) {
 
 function renderActiveView() {
   if (!activeRepoFullName) {
+    hideLoader();
     emptyState.style.display = "flex";
     frame.style.display = "none";
     frame.classList.remove("loaded");
@@ -52,10 +77,18 @@ function renderActiveView() {
 
   let targetUrl = "";
   if (currentMode === "diagram") {
-    // Native architecture diagram route
+    showLoader(
+      "Parsing Architecture AST",
+      `Analyzing modules and call graphs for ${activeRepoFullName}...`,
+      "AST Visualizer"
+    );
     targetUrl = `${APP_BASE_URL}/diagram?repo=${encodeURIComponent(activeRepoFullName)}`;
   } else {
-    // PR review and issue triage route
+    showLoader(
+      "Scanning Pull Requests",
+      `Loading PR deck & Gemma 4 risk scores for ${activeRepoFullName}...`,
+      "PR Triage & Review"
+    );
     targetUrl = `${APP_BASE_URL}/swipe?repo=${encodeURIComponent(activeRepoFullName)}`;
   }
 

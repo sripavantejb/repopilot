@@ -189,10 +189,28 @@ export default function DiagramPage() {
       {/* Main Architecture View */}
       <main className="flex flex-1 flex-col p-4 lg:p-8">
         {isLoading ? (
-          <div className="flex h-96 flex-col items-center justify-center gap-4">
-            <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-            <div className="font-mono text-sm text-muted-foreground">
-              Analyzing repository structure and building architecture graph…
+          <div className="flex h-[420px] flex-col items-center justify-center p-8 text-center bg-[#FDF8F0] rounded-2xl border border-black/[0.06]">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#B4C7EF]/30 border border-black/[0.08] px-3.5 py-1 text-[12px] font-semibold text-[#1a1a1a] mb-5">
+              <span className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse" />
+              <span>RepoPilot AST Engine</span>
+            </div>
+            
+            <div className="relative w-14 h-14 flex items-center justify-center mb-4">
+              <div className="absolute inset-0 rounded-full border-2 border-black/[0.06] border-t-[#1a1a1a] animate-spin" />
+              <div className="w-8 h-8 rounded-full bg-[#1a1a1a] text-white flex items-center justify-center font-black text-xs">
+                RP
+              </div>
+            </div>
+
+            <h3 className="font-serif text-[20px] font-medium text-[#1a1a1a] mb-1">
+              Analyzing Codebase Architecture
+            </h3>
+            <p className="text-[13px] text-[#666] max-w-sm">
+              Parsing AST nodes, dependency trees, and module topology for <span className="font-mono text-[#1a1a1a]">{activeRepo}</span>…
+            </p>
+
+            <div className="mt-5 w-40 h-1 bg-black/[0.06] rounded-full overflow-hidden">
+              <div className="h-full bg-[#1a1a1a] rounded-full animate-pulse" style={{ width: '65%' }} />
             </div>
           </div>
         ) : error ? (

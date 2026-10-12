@@ -31,20 +31,20 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#FDF8F0] text-[#1a1a1a] selection:bg-[#B4C7EF] selection:text-[#1a1a1a] font-sans">
       {/* 7.1 Floating Pill Navigation */}
       <nav 
-        className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-4 py-2.5 rounded-full transition-all duration-300 ${
+        className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between md:justify-start gap-3 sm:gap-5 px-4 sm:px-5 py-2.5 rounded-full transition-all duration-300 ${
           scrolled 
             ? "bg-white/95 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-black/10" 
             : "bg-white/90 shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-black/[0.06]"
-        } backdrop-blur-xl`}
-        style={{ maxWidth: "calc(100vw - 32px)" }}
+        } backdrop-blur-xl whitespace-nowrap`}
+        style={{ maxWidth: "calc(100vw - 32px)", width: "max-content" }}
       >
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
           {/* Logo mark */}
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] text-white">
-            <GitPullRequest className="h-4 w-4" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#1a1a1a] text-white flex-shrink-0">
+            <GitPullRequest className="h-3.5 w-3.5" />
           </div>
           {/* 2.4 Wordmark: REPOPILOT uppercase Inter 900 skewed -8deg */}
-          <span className="skew-wordmark font-black tracking-[-0.04em] text-lg text-[#1a1a1a]">
+          <span className="skew-wordmark font-black tracking-[-0.04em] text-[17px] text-[#1a1a1a] select-none">
             {"REPOPILOT".split("").map((char, i) => (
               <span key={i}>{char}</span>
             ))}
@@ -52,7 +52,7 @@ export default function LandingPage() {
         </Link>
 
         {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-6 text-[14px] font-medium text-[#333] ml-2">
+        <div className="hidden lg:flex items-center gap-6 text-[14px] font-medium text-[#333] ml-1 flex-shrink-0">
           <Link href="/swipe" className="transition hover:text-[#1a1a1a]">
             Review Queue
           </Link>
@@ -68,12 +68,12 @@ export default function LandingPage() {
         </div>
 
         {/* Vertical divider */}
-        <div className="hidden md:block w-px h-5 bg-black/10" />
+        <div className="hidden lg:block w-px h-5 bg-black/10 flex-shrink-0" />
 
         {/* Primary CTA pill */}
         <Link
           href="/swipe"
-          className="flex items-center gap-1.5 rounded-full bg-[#1a1a1a] px-4 py-2 text-[14px] font-semibold text-white transition-all hover:bg-black hover:-translate-y-0.5"
+          className="flex items-center gap-1.5 rounded-full bg-[#1a1a1a] px-4 py-2 text-[14px] font-semibold text-white transition-all hover:bg-black hover:-translate-y-0.5 flex-shrink-0"
         >
           <span>Start Triage</span>
           <ArrowRight className="h-3.5 w-3.5" />
@@ -92,9 +92,21 @@ export default function LandingPage() {
           {/* Halftone texture overlay */}
           <div className="absolute inset-0 halftone-dots opacity-40 pointer-events-none" />
 
-          {/* Paper clouds */}
-          <div className="absolute top-8 left-12 w-28 h-10 bg-white/80 rounded-full blur-[0.5px] shadow-[0_2px_8px_rgba(0,0,0,0.04)]" />
-          <div className="absolute top-14 right-16 w-36 h-12 bg-white/85 rounded-full blur-[0.5px] shadow-[0_2px_8px_rgba(0,0,0,0.04)]" />
+          {/* Organic Layered Paper Clouds (§9) */}
+          <div className="absolute top-10 left-10 pointer-events-none hidden sm:block opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="relative w-28 h-8 bg-white rounded-full">
+              <div className="absolute -top-4 left-3 w-10 h-10 bg-white rounded-full" />
+              <div className="absolute -top-6 left-9 w-12 h-12 bg-white rounded-full" />
+            </div>
+          </div>
+
+          <div className="absolute top-12 right-12 pointer-events-none hidden sm:block opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+            <div className="relative w-36 h-9 bg-white rounded-full">
+              <div className="absolute -top-5 left-4 w-12 h-12 bg-white rounded-full" />
+              <div className="absolute -top-7 left-14 w-14 h-14 bg-white rounded-full" />
+              <div className="absolute -top-4 right-4 w-10 h-10 bg-white rounded-full" />
+            </div>
+          </div>
           
           {/* Content container */}
           <div className="relative z-10 text-center max-w-[760px] mx-auto">

@@ -135,10 +135,15 @@
 }
 
 /* Skewed wordmark styling */
+.skew-wordmark {
+  display: inline-flex;
+  white-space: nowrap;
+  letter-spacing: -0.04em;
+}
 .skew-wordmark span {
   display: inline-block;
   transform: skewX(-8deg);
-  letter-spacing: -0.04em;
+  white-space: nowrap;
 }
 
 /* Floating pill nav */

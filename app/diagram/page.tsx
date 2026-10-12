@@ -137,13 +137,19 @@ export default function DiagramPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-sm lg:px-8">
+      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-black/[0.06] bg-[#FDF8F0]/90 px-4 backdrop-blur-md lg:px-8">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-1.5 font-mono text-lg font-bold tracking-tight">
-            <span className="text-[#3B82F6]">•</span>
-            <span>RepoPilot</span>
-            <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-xs font-semibold text-blue-400">
-              Architecture
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1a1a1a] text-white">
+              <span className="text-[11px] font-bold">RP</span>
+            </div>
+            <span className="skew-wordmark font-black tracking-[-0.04em] text-base text-[#1a1a1a]">
+              {"REPOPILOT".split("").map((char, i) => (
+                <span key={i}>{char}</span>
+              ))}
+            </span>
+            <span className="rounded-full bg-[#B4C7EF]/30 border border-black/[0.08] px-2.5 py-0.5 text-xs font-semibold text-[#1a1a1a]">
+              Architecture AST
             </span>
           </Link>
         </div>
@@ -158,13 +164,13 @@ export default function DiagramPage() {
               onKeyDown={(e) => e.key === 'Enter' && loadDiagram(repoInput)}
               placeholder="owner/repo (e.g. facebook/react)"
               disabled={isLoading}
-              className="w-full rounded-full border border-border bg-secondary/50 px-4 py-2 pl-10 pr-24 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-full border border-black/[0.08] bg-white px-4 py-2 pl-10 pr-24 text-sm text-[#1a1a1a] placeholder:text-[#888] shadow-sm focus:border-black/30 focus:outline-none"
             />
-            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#888]" />
             <button
               onClick={() => loadDiagram(repoInput)}
               disabled={isLoading}
-              className="absolute right-1.5 top-1.5 rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-blue-500"
+              className="absolute right-1.5 top-1.5 rounded-full bg-[#1a1a1a] px-3.5 py-1 text-xs font-semibold text-white transition hover:bg-black"
             >
               Analyze
             </button>
@@ -176,10 +182,10 @@ export default function DiagramPage() {
           {activeRepo && (
             <Link
               href={`/swipe?repo=${encodeURIComponent(activeRepo)}`}
-              className="flex items-center gap-1.5 rounded-full bg-emerald-600/15 border border-emerald-500/30 px-3.5 py-1.5 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-600/25"
+              className="flex items-center gap-1.5 rounded-full bg-[#C8E6C9]/40 border border-[#2E7D32]/30 px-3.5 py-1.5 text-xs font-semibold text-[#2E7D32] transition hover:bg-[#C8E6C9]/60 shadow-sm"
             >
               <Layers className="h-3.5 w-3.5" />
-              Triage PRs
+              <span>Triage PRs</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
           )}
@@ -187,9 +193,9 @@ export default function DiagramPage() {
       </header>
 
       {/* Main Architecture View */}
-      <main className="flex flex-1 flex-col p-4 lg:p-8">
+      <main className="flex flex-1 flex-col p-4 lg:p-8 max-w-7xl mx-auto w-full">
         {isLoading ? (
-          <div className="flex h-[420px] flex-col items-center justify-center p-8 text-center bg-[#FDF8F0] rounded-2xl border border-black/[0.06]">
+          <div className="flex h-[420px] flex-col items-center justify-center p-8 text-center bg-white rounded-[20px] border border-black/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#B4C7EF]/30 border border-black/[0.08] px-3.5 py-1 text-[12px] font-semibold text-[#1a1a1a] mb-5">
               <span className="w-2 h-2 rounded-full bg-[#2E7D32] animate-pulse" />
               <span>RepoPilot AST Engine</span>
@@ -202,10 +208,10 @@ export default function DiagramPage() {
               </div>
             </div>
 
-            <h3 className="font-serif text-[20px] font-medium text-[#1a1a1a] mb-1">
+            <h3 className="font-serif text-[22px] font-medium text-[#1a1a1a] mb-1">
               Analyzing Codebase Architecture
             </h3>
-            <p className="text-[13px] text-[#666] max-w-sm">
+            <p className="text-[14px] text-[#666] max-w-sm">
               Parsing AST nodes, dependency trees, and module topology for <span className="font-mono text-[#1a1a1a]">{activeRepo}</span>…
             </p>
 
@@ -214,45 +220,45 @@ export default function DiagramPage() {
             </div>
           </div>
         ) : error ? (
-          <div className="flex h-96 flex-col items-center justify-center gap-3 text-center">
-            <div className="text-red-400 font-mono text-sm">{error}</div>
+          <div className="flex h-96 flex-col items-center justify-center gap-3 text-center bg-white rounded-[20px] border border-black/[0.06] p-8">
+            <div className="text-[#D64545] font-medium text-sm">{error}</div>
             <button
               onClick={() => loadDiagram(repoInput || 'resend/resend-node')}
-              className="rounded-md border border-border bg-secondary px-4 py-2 text-xs font-medium"
+              className="rounded-full bg-[#1a1a1a] text-white px-5 py-2 text-xs font-semibold hover:bg-black"
             >
               Try Demo Repo
             </button>
           </div>
         ) : data ? (
           <div className="flex flex-col gap-6">
-            {/* Repo Header Meta */}
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4">
+            {/* Repo Header Meta Card (§7.4) */}
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-black/[0.06] bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
               <div>
-                <h1 className="flex items-center gap-2 font-mono text-xl font-bold text-foreground">
+                <h1 className="flex items-center gap-2 font-serif text-[26px] font-medium text-[#1a1a1a]">
                   <span>{data.repo}</span>
                   <a
                     href={`https://github.com/${data.repo}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-[#666] hover:text-[#1a1a1a] transition"
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </h1>
-                <p className="mt-1 text-sm text-muted-foreground">{data.description}</p>
+                <p className="mt-1 text-[14px] text-[#666]">{data.description}</p>
               </div>
 
-              <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 text-yellow-500" />
+              <div className="flex items-center gap-3 text-xs font-mono text-[#444]">
+                <div className="flex items-center gap-1.5 rounded-full bg-[#FEF3C7] px-3 py-1 text-[#b45309] font-medium border border-[#b45309]/20">
+                  <Star className="h-3.5 w-3.5 text-[#b45309]" />
                   <span>{data.stars} stars</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <FileCode className="h-3.5 w-3.5 text-blue-400" />
+                <div className="flex items-center gap-1.5 rounded-full bg-[#B4C7EF]/30 px-3 py-1 text-[#1a1a1a] font-medium border border-black/[0.08]">
+                  <FileCode className="h-3.5 w-3.5 text-[#1a1a1a]" />
                   <span>{data.totalFiles} files</span>
                 </div>
                 {data.language && (
-                  <span className="rounded-full bg-secondary px-2.5 py-0.5 text-foreground font-semibold">
+                  <span className="rounded-full bg-[#F5F5F5] border border-black/[0.06] px-3 py-1 text-[#333] font-semibold">
                     {data.language}
                   </span>
                 )}
@@ -262,29 +268,29 @@ export default function DiagramPage() {
             {/* Architecture Diagram Canvas & Module Explorer */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
               {/* Left 2 Cols: Mermaid Architecture Map */}
-              <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6 flex flex-col">
-                <div className="flex items-center justify-between mb-4 border-b border-border pb-3">
+              <div className="lg:col-span-2 rounded-[20px] border border-black/[0.06] bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)] flex flex-col">
+                <div className="flex items-center justify-between mb-4 border-b border-black/[0.05] pb-3">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-blue-400" />
-                    <h2 className="font-mono text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Sparkles className="h-4 w-4 text-[#1a1a1a]" />
+                    <h2 className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#333]">
                       Architecture & Dependency Graph
                     </h2>
                   </div>
-                  <span className="text-xs font-mono text-muted-foreground">Auto-synthesized</span>
+                  <span className="text-[11px] text-[#666] font-mono">Auto-synthesized</span>
                 </div>
 
                 <div
                   ref={mermaidRef}
-                  className="flex-1 overflow-auto rounded-lg bg-zinc-950/60 p-4 text-center min-h-[420px] flex items-center justify-center"
+                  className="flex-1 overflow-auto rounded-[14px] bg-[#FAFAF8] border border-black/[0.04] p-4 text-center min-h-[460px] flex items-center justify-center"
                 />
               </div>
 
               {/* Right Col: Module Explorer & Entry Points */}
               <div className="flex flex-col gap-6">
                 {/* Entry points */}
-                <div className="rounded-xl border border-border bg-card p-5">
-                  <h3 className="flex items-center gap-2 font-mono text-xs font-semibold uppercase text-muted-foreground mb-3">
-                    <FileCode className="h-4 w-4 text-emerald-400" />
+                <div className="rounded-[20px] border border-black/[0.06] bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)]">
+                  <h3 className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#333] mb-3">
+                    <FileCode className="h-4 w-4 text-[#2E7D32]" />
                     Entry Points
                   </h3>
                   {data.entryPoints.length > 0 ? (
@@ -292,22 +298,22 @@ export default function DiagramPage() {
                       {data.entryPoints.map((ep) => (
                         <li
                           key={ep}
-                          className="rounded bg-secondary/40 px-2.5 py-1.5 text-emerald-300 font-medium"
+                          className="rounded-lg bg-[#E8F5E9] border border-[#2E7D32]/20 px-3 py-1.5 text-[#2E7D32] font-semibold"
                         >
                           {ep}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <div className="text-xs text-muted-foreground">Standard module entry layout</div>
+                    <div className="text-xs text-[#666]">Standard repository entry points</div>
                   )}
                 </div>
 
                 {/* Top Modules */}
-                <div className="rounded-xl border border-border bg-card p-5 flex-1">
-                  <h3 className="flex items-center gap-2 font-mono text-xs font-semibold uppercase text-muted-foreground mb-3">
-                    <Folder className="h-4 w-4 text-blue-400" />
-                    Key Modules ({data.topLevelDirs.length})
+                <div className="rounded-[20px] border border-black/[0.06] bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.04)] flex-1">
+                  <h3 className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#333] mb-3">
+                    <Folder className="h-4 w-4 text-[#1a1a1a]" />
+                    Top Modules ({data.topLevelDirs.length})
                   </h3>
                   <div className="flex flex-col gap-2">
                     {data.topLevelDirs.map((dir) => {
@@ -317,18 +323,18 @@ export default function DiagramPage() {
                         <div
                           key={dir}
                           onClick={() => setSelectedModule(dir)}
-                          className={`cursor-pointer rounded-lg border p-3 transition ${
+                          className={`cursor-pointer rounded-[12px] border p-3 transition ${
                             isSelected
-                              ? 'border-blue-500/50 bg-blue-500/10'
-                              : 'border-border/60 bg-secondary/30 hover:bg-secondary/60'
+                              ? 'border-black/30 bg-[#B4C7EF]/30'
+                              : 'border-black/[0.06] bg-[#FAFAF8] hover:bg-[#F5F5F0]'
                           }`}
                         >
-                          <div className="flex items-center justify-between font-mono text-xs font-semibold">
+                          <div className="flex items-center justify-between font-mono text-xs font-semibold text-[#1a1a1a]">
                             <span>📁 {dir}</span>
-                            <span className="text-muted-foreground">{mod?.count || 0} files</span>
+                            <span className="text-[#666] font-normal">{mod?.count || 0} files</span>
                           </div>
                           {isSelected && mod?.files && (
-                            <div className="mt-2.5 flex flex-col gap-1 border-t border-border/40 pt-2 font-mono text-[11px] text-muted-foreground">
+                            <div className="mt-2.5 flex flex-col gap-1 border-t border-black/[0.06] pt-2 font-mono text-[11px] text-[#444]">
                               {mod.files.map((f) => (
                                 <span key={f} className="truncate">
                                   📄 {f}

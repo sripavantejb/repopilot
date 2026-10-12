@@ -778,6 +778,13 @@ export default function LandingPage() {
             <Link href="/diagram" className="hover:text-[#1a1a1a] transition">
               AST Explorer
             </Link>
+            <button
+              onClick={() => setIsExtensionModalOpen(true)}
+              className="hover:text-[#1a1a1a] transition flex items-center gap-1"
+            >
+              <span>DevTools Extension</span>
+              <span className="text-[10px] bg-[#C8E6C9] text-[#2E7D32] px-1.5 py-0.2 rounded-full font-bold">.ZIP</span>
+            </button>
             <a href="https://github.com/sripavantejb/repopilot" target="_blank" rel="noopener noreferrer" className="hover:text-[#1a1a1a] transition">
               GitHub Repo
             </a>
@@ -788,6 +795,12 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Chrome Extension Download & DevTools Setup Modal */}
+      <ChromeExtensionModal
+        isOpen={isExtensionModalOpen}
+        onClose={() => setIsExtensionModalOpen(false)}
+      />
     </div>
   )
 }

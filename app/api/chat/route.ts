@@ -4,7 +4,7 @@
  * Gracefully degrades when AI Gateway is unavailable.
  */
 
-import { streamText, tool } from "ai";
+import { streamText, tool, stepCountIs } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq, and, sql } from "drizzle-orm";
@@ -29,7 +29,7 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
       tools: {
         risk_score: tool({
           description: "Get the heuristic risk score (0-100) for the active PR with reasons.",
-          parameters: z.object({}),
+          inputSchema: z.object({}),
           execute: async () => {
             if (!prId) return { error: "No active PR" };
             if (!db || !isUuid(prId)) {
@@ -60,7 +60,7 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
         }),
         contributor_history: tool({
           description: "Get the PR history and merge rate for the author of the active PR.",
-          parameters: z.object({}),
+          inputSchema: z.object({}),
           execute: async () => {
             if (!prId) return { error: "No active PR" };
             if (!db || !isUuid(repoId)) {
@@ -94,7 +94,7 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
         }),
         list_changed_files: tool({
           description: "List all files changed in the active PR with their diff stats.",
-          parameters: z.object({}),
+          inputSchema: z.object({}),
           execute: async () => {
             if (!prId) return { error: "No active PR" };
             if (!db || !isUuid(prId)) {
@@ -113,8 +113,8 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
         }),
         find_callers: tool({
           description: "Search changed file patches for usages of a function or symbol.",
-          parameters: z.object({ name: z.string().describe("Function or symbol name to search for") }),
-          execute: async ({ name }) => {
+          inputSchema: z.object({ name: z.string().describe("Function or symbol name to search for") }),
+          execute: async ({ name }: { name: string }) => {
             if (!repoId) return { error: "No repo context" };
             if (!db || !isUuid(repoId)) {
               return { symbol: name, results: [{ filename: "src/index.ts", lines: [`// Usage of ${name} in source`] }] };
@@ -139,7 +139,7 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
           },
         }),
       },
-      maxSteps: 3,
+      stopWhen: stepCountIs(3),
     });
 
     return result.toTextStreamResponse();

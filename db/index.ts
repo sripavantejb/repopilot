@@ -17,7 +17,7 @@ if (databaseUrl) {
 }
 
 export const sql = sqlClient;
-export const db = dbClient;
+export const db = dbClient as unknown as NeonHttpDatabase<typeof schema>;
 
 export type DB = NeonHttpDatabase<typeof schema>;
 export * from "./schema";

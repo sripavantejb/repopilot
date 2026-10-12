@@ -116,7 +116,7 @@ export function PRCard({
           </div>
 
           {/* Title */}
-          <h2 className="mt-3 line-clamp-2 text-[22px] font-medium leading-[1.3] text-card-foreground">
+          <h2 className="mt-3 line-clamp-2 font-serif text-[22px] font-medium leading-[1.3] text-card-foreground">
             {pr.title}
           </h2>
 

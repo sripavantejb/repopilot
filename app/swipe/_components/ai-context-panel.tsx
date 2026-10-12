@@ -305,7 +305,7 @@ export function AIContextPanel({ context, messages, onSendMessage, onDeeperActio
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything about this PR..."
-            className="w-full rounded-lg border border-border bg-card px-4 py-3 pr-12 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-[#FF0080] focus:outline-none focus:ring-1 focus:ring-[#FF0080]"
+            className="w-full rounded-lg border border-border bg-card px-4 py-3 pr-12 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
           />
           <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-xs text-muted-foreground">
             ↵
@@ -348,11 +348,11 @@ function SimilarPRRow({ pr }: { pr: SimilarPR }) {
   }
 
   return (
-    <button className="group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary">
+    <button className="group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary">
       <div className="transition-transform group-hover:translate-x-0.5">{getStateIcon()}</div>
       <span className="flex-1 truncate text-sm text-card-foreground">{pr.title}</span>
       <span className="font-mono text-xs text-muted-foreground">{pr.date}</span>
-      <div className="absolute left-0 h-full w-0.5 rounded bg-[#FF0080] opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="absolute left-0 h-full w-0.5 rounded bg-foreground opacity-0 transition-opacity group-hover:opacity-100" />
     </button>
   )
 }

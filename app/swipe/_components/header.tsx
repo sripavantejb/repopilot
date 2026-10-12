@@ -119,14 +119,14 @@ export function Header({
             title={hasKey ? 'API key set — chat uses your key' : 'Set an API key for chat (Anthropic, Gemini, or Groq)'}
             className={`flex h-7 w-7 items-center justify-center rounded-full border font-mono text-xs transition-colors ${
               hasKey
-                ? 'border-[#FF0080] text-[#FF0080] hover:bg-[#FF0080]/10'
+                ? 'border-[#2E7D32] bg-[#E8F5E9] text-[#2E7D32] dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-400'
                 : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
             }`}
           >
             ⌘
           </button>
           {keyOpen && (
-            <div className="absolute right-0 top-9 z-50 w-72 rounded-lg border border-border bg-background p-3 shadow-lg">
+            <div className="absolute right-0 top-9 z-50 w-72 rounded-xl border border-border bg-background p-3 shadow-lg">
               <p className="mb-2 font-mono text-xs text-muted-foreground">
                 API key for chat — never stored on server. Supports Anthropic, Gemini, or Groq.
               </p>
@@ -137,7 +137,7 @@ export function Header({
                 onChange={(e) => setKeyDraft(e.target.value)}
                 onKeyDown={handleKeyKeyDown}
                 placeholder="sk-ant-... / AIza... / gsk_..."
-                className="w-full rounded border border-border bg-background px-3 py-1.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-[#FF0080] focus:outline-none"
+                className="w-full rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
               />
               <div className="mt-2 flex items-center justify-between">
                 <a

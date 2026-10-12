@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { GitMerge } from 'lucide-react'
+import { GitMerge, Check, X, ArrowDown } from 'lucide-react'
 import type { PullRequest, SwipeAction, ImpactResult } from '../_types'
 import { PRCard } from './pr-card'
 
@@ -71,9 +71,9 @@ export function ActionButtons({ onAction, autoMergeEnabled }: ActionButtonsProps
     <div className="mt-6 grid grid-cols-3 gap-3">
       <button
         onClick={() => onAction('changes')}
-        className="group flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-[#DC2626] bg-card font-mono text-sm font-medium text-[#DC2626] transition-colors hover:bg-[#DC2626]/10"
+        className="group flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-[#DC2626] bg-card font-mono text-sm font-medium text-[#DC2626] transition-colors hover:bg-[#DC2626]/10 shadow-xs active:scale-[0.98]"
       >
-        <span>x</span>
+        <X className="h-4 w-4" />
         <span>Request changes</span>
         <span className="ml-1 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
           F
@@ -81,9 +81,9 @@ export function ActionButtons({ onAction, autoMergeEnabled }: ActionButtonsProps
       </button>
       <button
         onClick={() => onAction('skip')}
-        className="group flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-border bg-card font-mono text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+        className="group flex h-12 items-center justify-center gap-2 rounded-xl border-2 border-border bg-card font-mono text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary shadow-xs active:scale-[0.98]"
       >
-        <span>↓</span>
+        <ArrowDown className="h-4 w-4" />
         <span>Skip</span>
         <span className="ml-1 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
           space
@@ -91,13 +91,13 @@ export function ActionButtons({ onAction, autoMergeEnabled }: ActionButtonsProps
       </button>
       <button
         onClick={() => onAction('approve')}
-        className={`group flex h-12 items-center justify-center gap-2 rounded-xl border-2 font-mono text-sm font-medium transition-all ${
+        className={`group flex h-12 items-center justify-center gap-2 rounded-xl border-2 font-mono text-sm font-medium transition-all shadow-xs active:scale-[0.98] ${
           autoMergeEnabled
             ? 'border-purple-600 bg-purple-600/10 text-purple-600 dark:text-purple-400 hover:bg-purple-600/20'
             : 'border-[#22C55E] bg-card text-[#22C55E] hover:bg-[#22C55E]/10'
         }`}
       >
-        {autoMergeEnabled ? <GitMerge className="h-4 w-4" /> : <span>✓</span>}
+        {autoMergeEnabled ? <GitMerge className="h-4 w-4" /> : <Check className="h-4 w-4" />}
         <span>{autoMergeEnabled ? 'Approve & Merge' : 'Approve'}</span>
         <span className="ml-1 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
           J

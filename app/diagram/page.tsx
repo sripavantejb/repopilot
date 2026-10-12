@@ -204,19 +204,31 @@ export default function DiagramPage() {
 
         const mermaid = (window as any).mermaid
         if (mermaid && isMounted && mermaidRef.current) {
+          const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
           mermaid.initialize({
             startOnLoad: false,
-            theme: 'dark',
-            themeVariables: {
-              darkMode: true,
-              background: '#09090b',
-              primaryColor: '#1e293b',
-              primaryTextColor: '#f8fafc',
-              primaryBorderColor: '#3b82f6',
-              lineColor: '#22c55e',
-              secondaryColor: '#18181b',
-              tertiaryColor: '#0f172a',
-            },
+            theme: isDark ? 'dark' : 'neutral',
+            themeVariables: isDark
+              ? {
+                  darkMode: true,
+                  background: '#09090b',
+                  primaryColor: '#1e293b',
+                  primaryTextColor: '#f8fafc',
+                  primaryBorderColor: '#3b82f6',
+                  lineColor: '#22c55e',
+                  secondaryColor: '#18181b',
+                  tertiaryColor: '#0f172a',
+                }
+              : {
+                  darkMode: false,
+                  background: '#FAFAF8',
+                  primaryColor: '#B4C7EF',
+                  primaryTextColor: '#1a1a1a',
+                  primaryBorderColor: '#1a1a1a',
+                  lineColor: '#2E7D32',
+                  secondaryColor: '#FFE8D6',
+                  tertiaryColor: '#F5F5F5',
+                },
           })
           const id = `mermaid-svg-${Date.now()}`
           const { svg } = await mermaid.render(id, data.mermaid)

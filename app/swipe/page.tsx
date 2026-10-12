@@ -830,7 +830,7 @@ export default function SwipePage() {
 
       <main className={`mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-3 py-4 lg:flex-row lg:px-8 ${isEmbedded ? "pb-6" : "pb-24 lg:pb-20"}`}>
         {/* Left column - Card stack or Session Summary */}
-        <div className="w-full lg:w-[60%]">
+        <div className={`w-full ${isEmbedded ? '' : 'lg:w-[60%]'}`}>
           {isIngesting || isLoadingPRs ? (
             <IngestingState isIngesting={isIngesting} isLoadingPRs={isLoadingPRs} repo={repoInput} />
           ) : prList.length === 0 ? (
@@ -924,20 +924,22 @@ export default function SwipePage() {
           )}
         </div>
 
-        {/* Right column - AI Context Panel (desktop only) */}
-        <aside className="sticky top-20 hidden h-[calc(100vh-120px)] w-[40%] overflow-hidden lg:block">
-          <div className="h-full rounded-xl border border-border bg-secondary/50 p-4">
-            <AIContextPanel
-              context={displayContext}
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              onDeeperAction={handleDeeperAction}
-              impact={impact}
-              isLoadingImpact={isLoadingImpact}
-              isLoadingContext={isLoadingContext}
-            />
-          </div>
-        </aside>
+        {/* Right column - AI Context Panel (desktop only, hidden in embedded mode) */}
+        {!isEmbedded && (
+          <aside className="sticky top-20 hidden h-[calc(100vh-120px)] w-[40%] overflow-hidden lg:block">
+            <div className="h-full rounded-xl border border-border bg-secondary/50 p-4">
+              <AIContextPanel
+                context={displayContext}
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                onDeeperAction={handleDeeperAction}
+                impact={impact}
+                isLoadingImpact={isLoadingImpact}
+                isLoadingContext={isLoadingContext}
+              />
+            </div>
+          </aside>
+        )}
       </main>
 
       {/* Mobile context sheet */}

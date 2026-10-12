@@ -2,6 +2,56 @@
 // Injects an "Open in RepoPilot" trigger directly on GitHub PRs, Issues, and Code pages
 
 (function initRepoPilotInjector() {
+  const isWebLanding =
+    window.location.hostname === "localhost" ||
+    window.location.hostname.includes("repopilot") ||
+    window.location.hostname.includes("vercel.app");
+
+  if (isWebLanding) {
+    // Announce extension presence to the landing page
+    document.documentElement.setAttribute("data-repopilot-extension", "true");
+    
+    function notifyLandingPage() {
+      window.dispatchEvent(
+        new CustomEvent("repopilot:extension:status", {
+          detail: {
+            installed: true,
+            version: "1.0.0",
+            sidepanelAvailable: true,
+            devtoolsAvailable: true,
+          },
+        })
+      );
+      window.postMessage(
+        {
+          type: "REPOPILOT_EXTENSION_STATUS",
+          installed: true,
+          version: "1.0.0",
+          sidepanelAvailable: true,
+          devtoolsAvailable: true,
+        },
+        "*"
+      );
+    }
+
+    notifyLandingPage();
+    // Periodic ping so dynamically loaded components catch it
+    const pingInterval = setInterval(notifyLandingPage, 1200);
+    setTimeout(() => clearInterval(pingInterval), 30000);
+
+    window.addEventListener("message", (event) => {
+      if (event.data?.type === "CHECK_REPOPILOT_EXTENSION") {
+        notifyLandingPage();
+      } else if (event.data?.type === "OPEN_REPOPILOT_SIDEPANEL") {
+        chrome.runtime.sendMessage({
+          type: "TRIGGER_OPEN_SIDEPANEL",
+        });
+      }
+    });
+
+    return;
+  }
+
   function getRepoInfo() {
     const parts = window.location.pathname.split("/").filter(Boolean);
     if (parts.length >= 2) {

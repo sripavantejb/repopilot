@@ -15,6 +15,8 @@ node_modules
 .next/
 .DS_Store
 .vercel
+*.tsbuildinfo
+extension/_metadata/
 
 # Internal agent memory — not for public consumption
 AGENTS.md
@@ -28,3 +30,4 @@ social/
 
 # Demo video — hosted via GitHub Releases, too large for git
 public/swipr_demo.mp4
+.env*

@@ -15,6 +15,7 @@ interface AIContextPanelProps {
   readonly onDeeperAction?: (action: DeeperAction) => Promise<string>
   readonly impact?: ImpactResult | null
   readonly isLoadingImpact?: boolean
+  readonly isLoadingContext?: boolean
 }
 
 const DEEPER_ACTIONS = [
@@ -24,7 +25,7 @@ const DEEPER_ACTIONS = [
   { key: 'compare' as DeeperAction, label: 'Compare with main', icon: GitCompare },
 ]
 
-export function AIContextPanel({ context, messages, onSendMessage, onDeeperAction, impact, isLoadingImpact }: AIContextPanelProps) {
+export function AIContextPanel({ context, messages, onSendMessage, onDeeperAction, impact, isLoadingImpact, isLoadingContext }: AIContextPanelProps) {
   const [input, setInput] = useState('')
   const [loadingAction, setLoadingAction] = useState<DeeperAction | null>(null)
   const [deeperResult, setDeeperResult] = useState<{ action: DeeperAction; label: string; content: string } | null>(null)
@@ -90,23 +91,35 @@ export function AIContextPanel({ context, messages, onSendMessage, onDeeperActio
           className="rounded-xl border border-border bg-card p-4"
         >
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Risk</div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className={`font-mono text-5xl font-bold tabular-nums ${getRiskColor(context.risk.score)}`}>
-              {context.risk.score}
-            </span>
-            <span className="font-mono text-sm text-muted-foreground">/ 100</span>
-          </div>
-          {context.risk.reasons && context.risk.reasons.length > 0 ? (
-            <ul className="mt-3 space-y-1.5">
-              {context.risk.reasons.map((r) => (
-                <li key={r.text} className="flex items-start gap-2 text-sm">
-                  <SourceBadge source={r.source} />
-                  <span className="text-card-foreground">{r.text}</span>
-                </li>
-              ))}
-            </ul>
+          {isLoadingContext ? (
+            <div className="mt-3 flex items-center gap-3">
+              <Loader2 className="h-6 w-6 animate-spin text-[#22C55E]" />
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-foreground">Calculating risk score…</div>
+                <div className="text-xs text-muted-foreground">Analyzing diff lines, files, and author history</div>
+              </div>
+            </div>
           ) : (
-            <p className="mt-2 text-sm text-muted-foreground">No significant risk factors detected.</p>
+            <>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className={`font-mono text-5xl font-bold tabular-nums ${getRiskColor(context.risk.score)}`}>
+                  {context.risk.score}
+                </span>
+                <span className="font-mono text-sm text-muted-foreground">/ 100</span>
+              </div>
+              {context.risk.reasons && context.risk.reasons.length > 0 ? (
+                <ul className="mt-3 space-y-1.5">
+                  {context.risk.reasons.map((r) => (
+                    <li key={r.text} className="flex items-start gap-2 text-sm">
+                      <SourceBadge source={r.source} />
+                      <span className="text-card-foreground">{r.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">No significant risk factors detected.</p>
+              )}
+            </>
           )}
         </motion.div>
 
@@ -118,14 +131,22 @@ export function AIContextPanel({ context, messages, onSendMessage, onDeeperActio
           className="rounded-xl border border-border bg-card p-4"
         >
           <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">What This Does</div>
-          <ol className="mt-3 space-y-2">
-            {context.summary.map((item, i) => (
-              <li key={i} className="flex gap-3 text-sm">
-                <span className="font-mono text-muted-foreground">{i + 1}</span>
-                <span className="text-card-foreground">{item}</span>
-              </li>
-            ))}
-          </ol>
+          {isLoadingContext ? (
+            <div className="mt-3 space-y-2">
+              <div className="h-3 w-4/5 animate-pulse rounded bg-secondary" />
+              <div className="h-3 w-full animate-pulse rounded bg-secondary" />
+              <div className="h-3 w-3/4 animate-pulse rounded bg-secondary" />
+            </div>
+          ) : (
+            <ol className="mt-3 space-y-2">
+              {context.summary.map((item, i) => (
+                <li key={i} className="flex gap-3 text-sm">
+                  <span className="font-mono text-muted-foreground">{i + 1}</span>
+                  <span className="text-card-foreground">{item}</span>
+                </li>
+              ))}
+            </ol>
+          )}
         </motion.div>
 
         {/* Impact Map card */}

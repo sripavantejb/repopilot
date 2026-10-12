@@ -1,8 +1,12 @@
 import { Octokit } from "@octokit/rest";
 
-const octokit = new Octokit({
-  auth: process.env.GITHUB_TOKEN || undefined,
-});
+export function getOctokit(token?: string) {
+  return new Octokit({
+    auth: token || process.env.GITHUB_TOKEN || undefined,
+  });
+}
+
+const octokit = getOctokit();
 
 export interface GithubPR {
   number: number;
@@ -146,4 +150,59 @@ export async function fetchRepoPRHistory(
       : null;
 
   return { total: authorPRs.length, merged, firstAt };
+}
+
+export async function mergePullRequest({
+  owner,
+  repo,
+  pullNumber,
+  mergeMethod = "squash",
+  commitTitle,
+  commitMessage,
+  token,
+}: {
+  owner: string;
+  repo: string;
+  pullNumber: number;
+  mergeMethod?: "merge" | "squash" | "rebase";
+  commitTitle?: string;
+  commitMessage?: string;
+  token?: string;
+}) {
+  const client = getOctokit(token);
+  const response = await client.pulls.merge({
+    owner,
+    repo,
+    pull_number: pullNumber,
+    merge_method: mergeMethod,
+    commit_title: commitTitle,
+    commit_message: commitMessage,
+  });
+  return response.data;
+}
+
+export async function createPullRequestReview({
+  owner,
+  repo,
+  pullNumber,
+  event,
+  body,
+  token,
+}: {
+  owner: string;
+  repo: string;
+  pullNumber: number;
+  event: "APPROVE" | "REQUEST_CHANGES" | "COMMENT";
+  body?: string;
+  token?: string;
+}) {
+  const client = getOctokit(token);
+  const response = await client.pulls.createReview({
+    owner,
+    repo,
+    pull_number: pullNumber,
+    event,
+    body: body || undefined,
+  });
+  return response.data;
 }

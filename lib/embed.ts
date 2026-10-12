@@ -2,21 +2,33 @@ import { embed, embedMany } from "ai";
 import { models } from "./ai";
 
 export async function embedText(text: string): Promise<number[]> {
-  const { embedding } = await embed({
-    model: models.embedding,
-    value: text.slice(0, 8000),
-  });
-  return embedding;
+  const model = models.embedding;
+  if (!model) return [];
+  try {
+    const { embedding } = await embed({
+      model,
+      value: text.slice(0, 8000),
+    });
+    return embedding;
+  } catch {
+    return [];
+  }
 }
 
 export async function embedBatch(texts: string[]): Promise<number[][]> {
-  if (texts.length === 0) return [];
-  const { embeddings } = await embedMany({
-    model: models.embedding,
-    values: texts.map((t) => t.slice(0, 8000)),
-  });
-  return embeddings;
+  const model = models.embedding;
+  if (texts.length === 0 || !model) return [];
+  try {
+    const { embeddings } = await embedMany({
+      model,
+      values: texts.map((t) => t.slice(0, 8000)),
+    });
+    return embeddings;
+  } catch {
+    return [];
+  }
 }
+
 
 export function averageVectors(vectors: number[][]): number[] {
   if (vectors.length === 0) return [];

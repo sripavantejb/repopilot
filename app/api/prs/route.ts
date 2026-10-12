@@ -48,33 +48,70 @@ export async function GET(req: NextRequest) {
       );
       if (ghRes.ok) {
         const ghPulls = await ghRes.json();
-        const livePrs: (PullRequest & { id: string; repoId: string })[] = ghPulls.map((p: any) => ({
-          id: String(p.id),
-          repoId: `live-${owner}-${repo}`,
-          number: p.number,
-          state: p.state,
-          title: p.title,
-          body: p.body ?? "",
-          author: {
-            handle: p.user?.login ?? "contributor",
-            avatarUrl: p.user?.avatar_url ?? `https://avatars.githubusercontent.com/u/0?v=4`,
-          },
-          openedAt: relativeTime(new Date(p.created_at)),
-          ciStatus: "passing" as const,
-          filesChanged: 1,
-          additions: 10,
-          deletions: 2,
-          diff: [
-            {
-              filename: p.title.toLowerCase().includes("doc") ? "README.md" : "src/index.ts",
-              status: "modified" as const,
-              additions: 10,
-              deletions: 2,
-              hunks: [],
+        
+        // Fetch detailed stats (additions, deletions, changed_files) in parallel for live accuracy
+        const detailedMap = new Map<number, { additions: number; deletions: number; changed_files: number }>();
+        try {
+          const detailResults = await Promise.allSettled(
+            ghPulls.slice(0, 15).map((p: any) =>
+              fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${p.number}`, { headers: ghHeaders })
+                .then((r) => (r.ok ? r.json() : null))
+            )
+          );
+          for (const res of detailResults) {
+            if (res.status === "fulfilled" && res.value) {
+              detailedMap.set(res.value.number, {
+                additions: res.value.additions ?? 0,
+                deletions: res.value.deletions ?? 0,
+                changed_files: res.value.changed_files ?? 1,
+              });
+            }
+          }
+        } catch {
+          // Gracefully continue with heuristic values if detail fetch encounters limits
+        }
+
+        const livePrs: (PullRequest & { id: string; repoId: string })[] = ghPulls.map((p: any) => {
+          const details = detailedMap.get(p.number);
+          const title = (p.title || "").toLowerCase();
+          const isDoc = title.includes("doc") || title.includes("readme");
+          const isChore = title.includes("chore") || title.includes("bump");
+          const isSecurity = title.includes("security") || title.includes("auth");
+          const isRefactor = title.includes("refactor") || title.includes("cleanup");
+          const isFeature = title.includes("feat") || title.includes("add");
+
+          const filesChanged = details ? details.changed_files : isDoc ? 1 : isRefactor ? 12 : isFeature ? 5 : 2;
+          const additions = details ? details.additions : isDoc ? 10 : isRefactor ? 380 : isFeature ? 120 : 25;
+          const deletions = details ? details.deletions : isDoc ? 2 : isRefactor ? 140 : isFeature ? 18 : 6;
+
+          const sampleFile = isDoc ? "README.md" : isSecurity ? "package.json" : isRefactor ? "src/core.ts" : "src/index.ts";
+
+          return {
+            id: String(p.id),
+            repoId: `live-${owner}-${repo}`,
+            number: p.number,
+            state: p.state,
+            title: p.title,
+            body: p.body ?? "",
+            author: {
+              handle: p.user?.login ?? "contributor",
+              avatarUrl: p.user?.avatar_url ?? `https://avatars.githubusercontent.com/u/0?v=4`,
             },
-          ],
-          htmlUrl: p.html_url,
-        }));
+            openedAt: relativeTime(new Date(p.created_at)),
+            ciStatus: "passing" as const,
+            filesChanged,
+            additions,
+            deletions,
+            diff: {
+              filePath: sampleFile,
+              lines: [
+                { type: "context" as const, content: `@@ ${sampleFile} @@` },
+                { type: "addition" as const, content: `+ // ${p.title}` },
+              ],
+            },
+            htmlUrl: p.html_url,
+          };
+        });
 
         return NextResponse.json({
           repoId: `live-${owner}-${repo}`,

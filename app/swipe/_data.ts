@@ -81,6 +81,7 @@ export const MOCK_AI_CONTEXT: AIContext = {
   risk: {
     score: 32,
     rationale: 'Adds optional parameter; existing callers unaffected. New utility lacks tests.',
+    reasons: [],
   },
   summary: [
     'Adds optional `idempotencyKey` to batch send',

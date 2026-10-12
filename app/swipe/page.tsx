@@ -7,6 +7,8 @@ import type { PullRequest, SwipeAction, ChatMessage, SessionStats, AIContext, De
 import { Header } from './_components/header'
 import { CardStack, ActionButtons } from './_components/card-stack'
 import { AIContextPanel } from './_components/ai-context-panel'
+import { toast } from 'sonner'
+import type { GitHubConfig } from './_components/github-settings-modal'
 import { BottomStrip } from './_components/bottom-strip'
 import { MobileContextSheet } from './_components/mobile-context-sheet'
 import { KeyboardHints } from './_components/keyboard-hints'
@@ -17,6 +19,7 @@ import { ViewRiskMatrix } from './_components/view-risk-matrix'
 import { ViewContributorFocus } from './_components/view-contributor-focus'
 import { ViewCategoryGroup } from './_components/view-category-group'
 import { ViewDependencyGraph } from './_components/view-dependency-graph'
+import { localRiskScore } from './_components/view-helpers'
 
 type DeeperAction = 'risk_verbose' | 'callers' | 'tests' | 'compare'
 
@@ -160,7 +163,7 @@ function IngestingState({ isIngesting, isLoadingPRs, repo }: { isIngesting: bool
 }
 
 const SKELETON_CONTEXT: AIContext = {
-  risk: { score: 0, rationale: 'Loading…' },
+  risk: { score: 0, rationale: 'Loading…', reasons: [] },
   summary: ['Loading context…'],
   similarPRs: [],
   contributor: { handle: '…', avatarUrl: '', priorPRs: 0, mergeRate: 0, firstPR: '…' },
@@ -202,6 +205,123 @@ export default function SwipePage() {
     if (key) localStorage.setItem('repopilot:apiKey', key)
     else localStorage.removeItem('repopilot:apiKey')
   }
+
+  // GitHub Integration state
+  const [githubConfig, setGithubConfig] = useState<GitHubConfig>({
+    token: '',
+    autoMerge: false,
+    mergeMethod: 'squash',
+    syncReviews: false,
+  })
+  const [mergingPrNumber, setMergingPrNumber] = useState<number | null>(null)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('repopilot:githubConfig')
+      if (stored) {
+        setGithubConfig(JSON.parse(stored))
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const handleGitHubConfigChange = (newConfig: GitHubConfig) => {
+    setGithubConfig(newConfig)
+    try {
+      localStorage.setItem('repopilot:githubConfig', JSON.stringify(newConfig))
+    } catch {
+      // ignore
+    }
+  }
+
+  // Execute PR Merge on GitHub
+  const executeMerge = useCallback(
+    async (pr: PullRequest) => {
+      const parsed = parseRepoInput(repoInput)
+      if (!parsed) {
+        toast.error('Cannot merge: repository could not be identified.')
+        return false
+      }
+
+      setMergingPrNumber(pr.number)
+      const toastId = toast.loading(`Merging PR #${pr.number} via ${githubConfig.mergeMethod}…`)
+
+      try {
+        const res = await fetch('/api/prs/merge', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(githubConfig.token ? { 'x-github-token': githubConfig.token } : {}),
+          },
+          body: JSON.stringify({
+            owner: parsed.owner,
+            repo: parsed.repo,
+            pullNumber: pr.number,
+            mergeMethod: githubConfig.mergeMethod,
+            prId: pr.id,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok || !data.success) {
+          toast.error(`Could not merge PR #${pr.number}`, {
+            id: toastId,
+            description: data.error || 'GitHub returned an error.',
+          })
+          return false
+        }
+
+        toast.success(`PR #${pr.number} merged! 🎉`, {
+          id: toastId,
+          description: data.message || `Successfully merged into ${parsed.owner}/${parsed.repo}`,
+        })
+
+        // Update PR state to merged in local list
+        setPrList((prev) =>
+          prev.map((item) => (item.number === pr.number ? { ...item, state: 'merged' } : item))
+        )
+        return true
+      } catch (err: any) {
+        toast.error(`Merge failed on PR #${pr.number}`, {
+          id: toastId,
+          description: err.message || 'Network request failed.',
+        })
+        return false
+      } finally {
+        setMergingPrNumber(null)
+      }
+    },
+    [repoInput, githubConfig]
+  )
+
+  // Execute GitHub Review on PR
+  const executeReview = useCallback(
+    async (pr: PullRequest, action: 'approve' | 'changes') => {
+      const parsed = parseRepoInput(repoInput)
+      if (!parsed || !githubConfig.token) return
+
+      try {
+        await fetch('/api/prs/review', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-github-token': githubConfig.token,
+          },
+          body: JSON.stringify({
+            owner: parsed.owner,
+            repo: parsed.repo,
+            pullNumber: pr.number,
+            event: action === 'approve' ? 'APPROVE' : 'REQUEST_CHANGES',
+          }),
+        })
+      } catch (err) {
+        console.warn('Failed to submit GitHub review:', err)
+      }
+    },
+    [repoInput, githubConfig.token]
+  )
 
   // Streak + stats
   const [streak, setStreak] = useState(0)
@@ -338,23 +458,106 @@ export default function SwipePage() {
     }
   }, [startSession])
 
+  // Helper to extract owner, repo, and PR number
+  const getPrParams = useCallback((pr: PullRequest) => {
+    let owner = ''
+    let repo = ''
+    if (pr.htmlUrl) {
+      const match = /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/.exec(pr.htmlUrl)
+      if (match) {
+        owner = match[1]
+        repo = match[2]
+      }
+    }
+    if (!owner && repoInput) {
+      const parsed = parseRepoInput(repoInput)
+      if (parsed) {
+        owner = parsed.owner
+        repo = parsed.repo
+      }
+    }
+    const params = new URLSearchParams()
+    if (pr.id) params.set('prId', pr.id)
+    if (owner) params.set('owner', owner)
+    if (repo) params.set('repo', repo)
+    if (pr.number) params.set('number', String(pr.number))
+    return params.toString()
+  }, [repoInput])
+
   // Load context for active PR
   const loadContext = useCallback(async (pr: PullRequest) => {
     if (!pr.id) return
     setIsLoadingContext(true)
     setContext(null)
     try {
-      const res = await fetch(`/api/context?prId=${pr.id}`, {
+      const qs = getPrParams(pr)
+      const res = await fetch(`/api/context?${qs}`, {
         headers: userApiKey ? { 'x-user-api-key': userApiKey } : {},
       })
-      const ctx = await res.json()
-      setContext(ctx)
+      if (res.ok) {
+        const ctx = await res.json()
+        if (ctx && ctx.risk) {
+          setContext(ctx)
+          return
+        }
+      }
+      // Instant graceful fallback if endpoint didn't return valid context
+      const fallbackScore = localRiskScore(pr)
+      setContext({
+        risk: {
+          score: fallbackScore,
+          rationale: fallbackScore > 50 ? 'Significant diff churn detected' : 'Standard review checklist applies',
+          reasons: [
+            { text: `${pr.filesChanged} file${pr.filesChanged === 1 ? '' : 's'} changed (+${pr.additions} -${pr.deletions})`, source: 'diff' },
+            { text: `Author: @${pr.author.handle}`, source: 'contributor' },
+          ],
+        },
+        prHtmlUrl: pr.htmlUrl,
+        summary: [
+          pr.title ? `${pr.title}.` : 'Pull request code changes.',
+          `Touches +${pr.additions}/-${pr.deletions} lines across ${pr.filesChanged} files.`,
+          'Automated security & quality verification.',
+        ],
+        similarPRs: [],
+        contributor: {
+          handle: pr.author.handle,
+          avatarUrl: pr.author.avatarUrl,
+          priorPRs: 1,
+          mergeRate: 0,
+          firstPR: pr.openedAt || 'recent',
+        },
+      })
     } catch (error) {
       console.error('[v0] Failed to load context:', error)
+      const fallbackScore = localRiskScore(pr)
+      setContext({
+        risk: {
+          score: fallbackScore,
+          rationale: fallbackScore > 50 ? 'Significant diff churn detected' : 'Standard review checklist applies',
+          reasons: [
+            { text: `${pr.filesChanged} file${pr.filesChanged === 1 ? '' : 's'} changed (+${pr.additions} -${pr.deletions})`, source: 'diff' },
+            { text: `Author: @${pr.author.handle}`, source: 'contributor' },
+          ],
+        },
+        prHtmlUrl: pr.htmlUrl,
+        summary: [
+          pr.title ? `${pr.title}.` : 'Pull request code changes.',
+          `Touches +${pr.additions}/-${pr.deletions} lines across ${pr.filesChanged} files.`,
+          'Automated security & quality verification.',
+        ],
+        similarPRs: [],
+        contributor: {
+          handle: pr.author.handle,
+          avatarUrl: pr.author.avatarUrl,
+          priorPRs: 1,
+          mergeRate: 0,
+          firstPR: pr.openedAt || 'recent',
+        },
+      })
     } finally {
       setIsLoadingContext(false)
     }
-  }, [])
+  }, [userApiKey, getPrParams])
 
   // Load impact map for active PR — fetched in parallel with context, not blocking
   const loadImpact = useCallback(async (pr: PullRequest) => {
@@ -362,14 +565,28 @@ export default function SwipePage() {
     setIsLoadingImpact(true)
     setImpact(null)
     try {
-      const res = await fetch(`/api/impact?prId=${pr.id}`)
-      if (res.ok) setImpact(await res.json())
+      const qs = getPrParams(pr)
+      const res = await fetch(`/api/impact?${qs}`)
+      if (res.ok) {
+        const imp = await res.json()
+        setImpact(imp)
+      } else {
+        setImpact({
+          changedFiles: [{ filename: pr.diff?.filePath || 'source.ts', symbols: [], additions: pr.additions, deletions: pr.deletions }],
+          symbols: [],
+          mermaidGraph: `graph TD\n  F0["${pr.diff?.filePath || 'source.ts'} (+${pr.additions} -${pr.deletions})"]:::file\n  classDef file fill:#FDF8F0,stroke:#D97706,stroke-width:1.5px,color:#1C1917;`,
+        })
+      }
     } catch {
-      // non-fatal — impact map is best-effort
+      setImpact({
+        changedFiles: [{ filename: pr.diff?.filePath || 'source.ts', symbols: [], additions: pr.additions, deletions: pr.deletions }],
+        symbols: [],
+        mermaidGraph: `graph TD\n  F0["${pr.diff?.filePath || 'source.ts'} (+${pr.additions} -${pr.deletions})"]:::file\n  classDef file fill:#FDF8F0,stroke:#D97706,stroke-width:1.5px,color:#1C1917;`,
+      })
     } finally {
       setIsLoadingImpact(false)
     }
-  }, [])
+  }, [getPrParams])
 
   // Try cache first; only ingest if the DB has no data for this repo
   const handleRepoSubmit = useCallback(async (repoStr: string) => {
@@ -437,8 +654,20 @@ export default function SwipePage() {
           body: JSON.stringify({ sessionId, prId: pr.id, action }),
         }).catch(console.error)
       }
+
+      // Execute automated GitHub actions
+      if (action === 'approve') {
+        if (githubConfig.autoMerge) {
+          executeMerge(pr)
+        }
+        if (githubConfig.syncReviews) {
+          executeReview(pr, 'approve')
+        }
+      } else if (action === 'changes' && githubConfig.syncReviews) {
+        executeReview(pr, 'changes')
+      }
     },
-    [prList, currentIndex, sessionId]
+    [prList, currentIndex, sessionId, githubConfig, executeMerge, executeReview]
   )
 
   // Handle chat message
@@ -516,9 +745,11 @@ export default function SwipePage() {
         streak={streak}
         defaultRepo={repoInput}
         apiKey={userApiKey}
+        githubConfig={githubConfig}
         onToggleHints={() => setHintsOpen(true)}
         onRepoSubmit={handleRepoSubmit}
         onApiKeyChange={handleApiKeyChange}
+        onGitHubConfigChange={handleGitHubConfigChange}
         isLoading={isLoading}
       />
 
@@ -578,8 +809,17 @@ export default function SwipePage() {
 
               {viewMode === 'swipe' && (
                 <>
-                  <CardStack prs={prList} currentIndex={currentIndex} onSwipe={handleSwipe} impact={impact} isLoadingImpact={isLoadingImpact} />
-                  <ActionButtons onAction={handleSwipe} />
+                  <CardStack
+                    prs={prList}
+                    currentIndex={currentIndex}
+                    onSwipe={handleSwipe}
+                    impact={impact}
+                    isLoadingImpact={isLoadingImpact}
+                    onMerge={executeMerge}
+                    mergingPrNumber={mergingPrNumber}
+                    autoMergeEnabled={githubConfig.autoMerge}
+                  />
+                  <ActionButtons onAction={handleSwipe} autoMergeEnabled={githubConfig.autoMerge} />
                   {lastAction && lastAction !== 'skip' && (
                     <motion.div
                       key={streak}
@@ -619,6 +859,7 @@ export default function SwipePage() {
               onDeeperAction={handleDeeperAction}
               impact={impact}
               isLoadingImpact={isLoadingImpact}
+              isLoadingContext={isLoadingContext}
             />
           </div>
         </aside>

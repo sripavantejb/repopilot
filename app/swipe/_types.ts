@@ -1,6 +1,6 @@
 export interface PullRequest {
-  id: string
-  repoId: string
+  id?: string
+  repoId?: string
   number: number
   state: 'open' | 'closed' | 'merged'
   title: string
@@ -88,7 +88,7 @@ export interface ImpactSymbol {
 }
 
 export interface ImpactResult {
-  changedFiles: Array<{ filename: string; symbols: string[] }>
+  changedFiles: Array<{ filename: string; symbols: string[]; additions?: number; deletions?: number }>
   symbols: ImpactSymbol[]
   mermaidGraph: string
 }

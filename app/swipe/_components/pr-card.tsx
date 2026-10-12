@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import type { PullRequest, SwipeAction, ImpactResult } from '../_types'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, GitMerge, Loader2 } from 'lucide-react'
 import { ImpactMap } from './impact-map'
 
 interface PRCardProps {
@@ -12,6 +12,9 @@ interface PRCardProps {
   readonly onSwipe: (action: SwipeAction) => void
   readonly impact?: ImpactResult | null
   readonly isLoadingImpact?: boolean
+  readonly onMerge?: (pr: PullRequest) => void
+  readonly isMerging?: boolean
+  readonly autoMergeEnabled?: boolean
 }
 
 function stateColorClass(state: PullRequest['state']): string {
@@ -31,7 +34,17 @@ function cardOpacity(isActive: boolean, stackIndex: number): number {
   return stackIndex === 1 ? 0.6 : 0.3
 }
 
-export function PRCard({ pr, isActive, stackIndex, onSwipe, impact, isLoadingImpact }: PRCardProps) {
+export function PRCard({
+  pr,
+  isActive,
+  stackIndex,
+  onSwipe,
+  impact,
+  isLoadingImpact,
+  onMerge,
+  isMerging,
+  autoMergeEnabled,
+}: PRCardProps) {
   const x = useMotionValue(0)
   const y = useMotionValue(0)
 
@@ -127,21 +140,52 @@ export function PRCard({ pr, isActive, stackIndex, onSwipe, impact, isLoadingImp
           </div>
 
           {/* Footer */}
-          <div className="mt-4 flex items-center gap-4 border-t border-border pt-4 font-mono text-xs text-muted-foreground">
-            <span>{pr.filesChanged} files changed</span>
-            <span className="text-[#22C55E]">+{pr.additions}</span>
-            <span className="text-[#DC2626]">-{pr.deletions}</span>
-            <div className="h-3 w-px bg-border" />
-            <a
-              href={pr.htmlUrl ?? `https://github.com/pull/${pr.number}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 transition-colors hover:text-foreground"
-              onClick={(e) => e.stopPropagation()}
-            >
-              View on GitHub
-              <ExternalLink className="h-3 w-3" />
-            </a>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 font-mono text-xs text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <span>{pr.filesChanged} files changed</span>
+              <span className="text-[#22C55E]">+{pr.additions}</span>
+              <span className="text-[#DC2626]">-{pr.deletions}</span>
+              <div className="h-3 w-px bg-border" />
+              <a
+                href={pr.htmlUrl ?? `https://github.com/pull/${pr.number}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 transition-colors hover:text-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
+                GitHub
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+
+            {/* Direct Merge Action or Status */}
+            {pr.state === 'merged' ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-purple-600 dark:text-purple-400">
+                <GitMerge className="h-3 w-3" /> Merged ✓
+              </span>
+            ) : onMerge ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onMerge(pr)
+                }}
+                disabled={isMerging}
+                className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/40 bg-purple-500/15 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300 transition hover:bg-purple-500/25 active:scale-95 disabled:opacity-50"
+              >
+                {isMerging ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Merging…</span>
+                  </>
+                ) : (
+                  <>
+                    <GitMerge className="h-3.5 w-3.5" />
+                    <span>Merge PR</span>
+                  </>
+                )}
+              </button>
+            ) : null}
           </div>
         </div>
       </motion.div>

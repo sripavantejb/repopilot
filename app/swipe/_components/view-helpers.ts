@@ -1,12 +1,32 @@
 import type { PullRequest } from '../_types'
 
 export function localRiskScore(pr: PullRequest): number {
-  const churn = pr.additions + pr.deletions
-  if (churn > 1000 || pr.filesChanged > 20) return 80
-  if (churn > 500 || pr.filesChanged > 10) return 60
-  if (churn > 200 || pr.filesChanged > 5) return 40
-  return 20
+  let score = 20
+  const title = (pr.title || '').toLowerCase()
+  const churn = (pr.additions || 0) + (pr.deletions || 0)
+  const files = pr.filesChanged || 1
+
+  // Churn factor
+  if (churn > 800) score += 35
+  else if (churn > 300) score += 25
+  else if (churn > 100) score += 15
+  else if (churn > 30) score += 8
+
+  // File count spread
+  if (files > 15) score += 25
+  else if (files > 8) score += 15
+  else if (files > 3) score += 8
+
+  // Semantic category risk
+  if (/security|auth|token|secret|credential|crypto|permission/i.test(title)) score += 30
+  else if (/break|migration|schema|deprecat/i.test(title)) score += 25
+  else if (/refactor|rewrite|core|engine/i.test(title)) score += 15
+  else if (/fix|bug|crash|leak|error/i.test(title)) score += 10
+  else if (/doc|readme|typo|comment|license/i.test(title)) score = Math.max(12, score - 15)
+
+  return Math.min(95, Math.max(10, score))
 }
+
 
 export function riskColor(score: number) {
   if (score >= 70) return 'bg-red-100 text-red-700 border-red-200'

@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { GitMerge } from 'lucide-react'
+import { GitHubSettingsModal, type GitHubConfig } from './github-settings-modal'
 
 interface HeaderProps {
   readonly currentPR: number
@@ -10,15 +12,30 @@ interface HeaderProps {
   readonly streak: number
   readonly defaultRepo?: string
   readonly apiKey?: string
+  readonly githubConfig?: GitHubConfig
   readonly onToggleHints?: () => void
   readonly onRepoSubmit?: (repo: string) => void
   readonly onApiKeyChange?: (key: string) => void
+  readonly onGitHubConfigChange?: (config: GitHubConfig) => void
   readonly isLoading?: boolean
 }
 
-export function Header({ currentPR, totalPRs, streak, defaultRepo = '', apiKey = '', onToggleHints, onRepoSubmit, onApiKeyChange, isLoading }: HeaderProps) {
+export function Header({
+  currentPR,
+  totalPRs,
+  streak,
+  defaultRepo = '',
+  apiKey = '',
+  githubConfig = { token: '', autoMerge: false, mergeMethod: 'squash', syncReviews: false },
+  onToggleHints,
+  onRepoSubmit,
+  onApiKeyChange,
+  onGitHubConfigChange,
+  isLoading,
+}: HeaderProps) {
   const [repo, setRepo] = useState(defaultRepo)
   const [keyOpen, setKeyOpen] = useState(false)
+  const [githubOpen, setGithubOpen] = useState(false)
   const [keyDraft, setKeyDraft] = useState(apiKey)
   const keyInputRef = useRef<HTMLInputElement>(null)
 
@@ -152,6 +169,39 @@ export function Header({ currentPR, totalPRs, streak, defaultRepo = '', apiKey =
           )}
         </div>
 
+        {/* GitHub Integration button */}
+        <button
+          onClick={() => setGithubOpen(true)}
+          title={
+            githubConfig?.token
+              ? `GitHub Connected${githubConfig.autoMerge ? ' • Auto-Merge Active' : ''}`
+              : 'Connect GitHub to merge PRs directly'
+          }
+          className={`flex h-7 items-center gap-1.5 rounded-full border px-2.5 font-mono text-xs transition-colors ${
+            githubConfig?.token
+              ? githubConfig.autoMerge
+                ? 'border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                : 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
+          }`}
+        >
+          <GitMerge className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">
+            {githubConfig?.token
+              ? githubConfig.autoMerge
+                ? 'Auto-Merge ON'
+                : 'GitHub Ready'
+              : 'GitHub'}
+          </span>
+          {githubConfig?.token && (
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                githubConfig.autoMerge ? 'bg-purple-500 animate-pulse' : 'bg-emerald-500'
+              }`}
+            />
+          )}
+        </button>
+
         <button
           onClick={onToggleHints}
           className="flex h-7 w-7 items-center justify-center rounded-full border border-border font-mono text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
@@ -162,6 +212,15 @@ export function Header({ currentPR, totalPRs, streak, defaultRepo = '', apiKey =
 
         <ThemeToggle />
       </div>
+
+      <GitHubSettingsModal
+        isOpen={githubOpen}
+        onClose={() => setGithubOpen(false)}
+        config={githubConfig}
+        onSaveConfig={(cfg) => {
+          onGitHubConfigChange?.(cfg)
+        }}
+      />
     </header>
   )
 }

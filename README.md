@@ -87,29 +87,15 @@ Whether onboarding to a million-line open-source repository or managing a flood 
 
 ## 📸 Visual Showcase
 
-### 1. Platform Overview & Dashboard
-> Full-spectrum codebase insight and PR triage control center.
-
-![RepoPilot Platform Overview](docs/screenshots/overview.png)
-
----
-
-### 2. Gitora Architecture AST & Topology Map
-> Deterministic AST generation mapping modules, entry points, and structural dependencies.
-
-![Gitora AST Architecture Diagram](docs/screenshots/ast-diagram.png)
-
----
-
-### 3. Interactive Codebase Graph & Module Explorer
-> Click any module or node to inspect file references and trace feature flows.
+### 1. Interactive Codebase Graph & Module Explorer
+> Click any module or node to inspect file references, top modules, and trace feature flows.
 
 ![Interactive Architecture Visualizer](docs/screenshots/architecture-graph.png)
 
 ---
 
-### 4. Gemma 4 Grounded Codebase Assistant
-> Docked, desktop-optimized assistant answering grounded queries with citations.
+### 2. Gemma 4 Grounded Codebase Assistant
+> Docked, desktop-optimized assistant answering grounded queries with source references.
 
 ![Gemma 4 Codebase Assistant](docs/screenshots/gemma-assistant.png)
 

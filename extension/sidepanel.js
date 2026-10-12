@@ -19,9 +19,29 @@ const defaultDemoBtn = document.getElementById("default-demo-btn");
 
 const tabDiagram = document.getElementById("tab-diagram");
 const tabPRs = document.getElementById("tab-prs");
+const prBadge = document.getElementById("pr-badge");
+
+// Native Bottom Stats Bar elements
+const bottomStatsBar = document.getElementById("bottom-stats-bar");
+const statApproved = document.getElementById("stat-approved");
+const statChanges = document.getElementById("stat-changes");
+const statSkipped = document.getElementById("stat-skipped");
+const summaryBtn = document.getElementById("summary-btn");
+const toastEl = document.getElementById("toast-msg");
 
 let activeRepoFullName = null;
 let currentMode = "prs"; // 'diagram' | 'prs'
+let toastTimer = null;
+
+function showToast(msg, type = "info", durationMs = 3500) {
+  if (!toastEl) return;
+  toastEl.textContent = msg;
+  toastEl.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toastEl.classList.remove("show");
+  }, durationMs);
+}
 
 function showLoader(title, desc, badge) {
   if (loaderOverlay) {
@@ -42,12 +62,20 @@ function hideLoader() {
 frame.addEventListener("load", () => {
   if (frame.src && frame.src !== "about:blank") {
     frame.classList.add("loaded");
-    // Brief settle time for app hydration
     setTimeout(() => {
       hideLoader();
-    }, 250);
+    }, 200);
   }
 });
+
+function updateBottomBar() {
+  if (!bottomStatsBar) return;
+  if (currentMode === "prs" && activeRepoFullName) {
+    bottomStatsBar.classList.add("visible");
+  } else {
+    bottomStatsBar.classList.remove("visible");
+  }
+}
 
 function setMode(mode) {
   currentMode = mode;
@@ -58,6 +86,7 @@ function setMode(mode) {
     tabPRs.classList.add("active");
     tabDiagram.classList.remove("active");
   }
+  updateBottomBar();
   renderActiveView();
 }
 
@@ -68,7 +97,9 @@ function renderActiveView() {
     frame.style.display = "none";
     frame.classList.remove("loaded");
     currentRepoEl.textContent = "None";
+    currentRepoEl.title = "No repository detected";
     pageTagEl.textContent = "GitHub";
+    updateBottomBar();
     return;
   }
 
@@ -82,20 +113,21 @@ function renderActiveView() {
       `Analyzing modules and call graphs for ${activeRepoFullName}...`,
       "AST Visualizer"
     );
-    targetUrl = `${APP_BASE_URL}/diagram?repo=${encodeURIComponent(activeRepoFullName)}`;
+    targetUrl = `${APP_BASE_URL}/diagram?repo=${encodeURIComponent(activeRepoFullName)}&embed=1`;
   } else {
     showLoader(
       "Scanning Pull Requests",
-      `Loading PR deck & Gemma 4 risk scores for ${activeRepoFullName}...`,
+      `Loading PR deck & Gemma risk scores for ${activeRepoFullName}...`,
       "PR Triage & Review"
     );
-    targetUrl = `${APP_BASE_URL}/swipe?repo=${encodeURIComponent(activeRepoFullName)}`;
+    targetUrl = `${APP_BASE_URL}/swipe?repo=${encodeURIComponent(activeRepoFullName)}&embed=1`;
   }
 
   if (frame.src !== targetUrl) {
     frame.classList.remove("loaded");
     frame.src = targetUrl;
   }
+  updateBottomBar();
 }
 
 function updateRepoView(repoFullName, isIssues, isPulls, isCode) {
@@ -107,41 +139,51 @@ function updateRepoView(repoFullName, isIssues, isPulls, isCode) {
 
   activeRepoFullName = repoFullName;
   currentRepoEl.textContent = repoFullName;
+  currentRepoEl.title = repoFullName;
 
   // Auto-switch modes contextually:
-  // - When on Issues or Pull Requests -> Activate PR & Issue Triage
-  // - When on Code (tree / blob / root) -> Activate Git Architecture Diagram
   if (isIssues) {
     pageTagEl.textContent = "Issues Detected → PR Triage";
     setMode("prs");
   } else if (isPulls) {
-    pageTagEl.textContent = "Pull Requests Detected → PR Triage";
+    pageTagEl.textContent = "PRs Detected → PR Triage";
     setMode("prs");
   } else {
-    pageTagEl.textContent = "Code Detected → Git Architecture";
+    pageTagEl.textContent = "Code Detected → Architecture";
     setMode("diagram");
   }
 }
 
 // Check session storage on initial side panel open
 async function initializeState() {
-  const sync = await chrome.storage.sync.get(["customBackendUrl"]);
-  if (sync.customBackendUrl) {
-    APP_BASE_URL = sync.customBackendUrl.replace(/\/$/, "");
-  } else {
+  try {
+    const sync = await chrome.storage.sync.get(["customBackendUrl"]);
+    if (sync?.customBackendUrl) {
+      APP_BASE_URL = sync.customBackendUrl.replace(/\/$/, "");
+    } else {
+      APP_BASE_URL = PROD_BASE_URL;
+    }
+  } catch {
     APP_BASE_URL = PROD_BASE_URL;
   }
 
-  const session = await chrome.storage.session.get([
-    "activeRepo",
-    "isIssues",
-    "isPulls",
-    "isCode",
-  ]);
+  try {
+    const session = await chrome.storage.session.get([
+      "activeRepo",
+      "isIssues",
+      "isPulls",
+      "isCode",
+    ]);
 
-  if (session.activeRepo) {
-    updateRepoView(session.activeRepo, session.isIssues, session.isPulls, session.isCode);
-  } else {
+    if (session?.activeRepo) {
+      updateRepoView(session.activeRepo, session.isIssues, session.isPulls, session.isCode);
+      return;
+    }
+  } catch {
+    // Session storage not accessible
+  }
+
+  try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab?.url && tab.url.includes("github.com")) {
       const parts = new URL(tab.url).pathname.split("/").filter(Boolean);
@@ -151,9 +193,15 @@ async function initializeState() {
         const isPulls = parts[2] === "pull" || parts[2] === "pulls";
         const isCode = !isIssues && !isPulls;
         updateRepoView(repoName, isIssues, isPulls, isCode);
+        return;
       }
     }
+  } catch {
+    // Tabs query fallback
   }
+
+  // Fallback to active demo if nothing detected
+  renderActiveView();
 }
 
 // Mode tab clicks
@@ -195,6 +243,7 @@ popoutBtn.addEventListener("click", () => {
 refreshBtn.addEventListener("click", () => {
   if (frame.src && frame.src !== "about:blank") {
     frame.classList.remove("loaded");
+    showLoader("Refreshing View", "Reloading latest repository data...", "Live Sync");
     frame.src = frame.src;
   }
 });
@@ -203,46 +252,26 @@ defaultDemoBtn.addEventListener("click", () => {
   updateRepoView("resend/resend-node", true, false, false);
 });
 
-// ─── Native Bottom Stats Bar ──────────────────────────────────────────────────
-const bottomStatsBar = document.getElementById("bottom-stats-bar");
-const statApproved = document.getElementById("stat-approved");
-const statChanges = document.getElementById("stat-changes");
-const statSkipped = document.getElementById("stat-skipped");
-const summaryBtn = document.getElementById("summary-btn");
-const toastEl = document.getElementById("toast-msg");
-
-let toastTimer = null;
-
-function showToast(msg, type = "info", durationMs = 4000) {
-  if (!toastEl) return;
-  toastEl.textContent = msg;
-  toastEl.className = `toast ${type} show`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toastEl.classList.remove("show");
-  }, durationMs);
-}
-
-// Show / hide the bottom stats bar based on current mode
-function updateBottomBar() {
-  if (!bottomStatsBar) return;
-  if (currentMode === "prs" && activeRepoFullName) {
-    bottomStatsBar.classList.add("visible");
-  } else {
-    bottomStatsBar.classList.remove("visible");
-  }
-}
-
-// Listen for postMessages from the swipe page iframe
+// ─── Native Bottom Stats Bar (Sync via postMessage) ──────────────────────────
 window.addEventListener("message", (event) => {
   if (!event.data || event.data.type !== "REPOPILOT_STATS_UPDATE") return;
 
-  const { stats, prCount, currentIndex: idx, repo } = event.data;
+  const { stats, prCount } = event.data;
 
   // Update counters
   if (statApproved) statApproved.textContent = stats.approved ?? 0;
   if (statChanges) statChanges.textContent = stats.changesRequested ?? 0;
   if (statSkipped) statSkipped.textContent = stats.skipped ?? 0;
+
+  // Update PR tab badge
+  if (prBadge) {
+    if (typeof prCount === "number" && prCount > 0) {
+      prBadge.textContent = prCount;
+      prBadge.classList.add("visible");
+    } else {
+      prBadge.classList.remove("visible");
+    }
+  }
 
   // Enable summary button only once at least one decision has been made
   const totalDecisions = (stats.approved ?? 0) + (stats.changesRequested ?? 0) + (stats.skipped ?? 0);
@@ -250,7 +279,7 @@ window.addEventListener("message", (event) => {
     summaryBtn.disabled = totalDecisions === 0;
   }
 
-  // Show bar once we have PRs loaded
+  // Show bar once PRs are active
   if (prCount > 0 && currentMode === "prs") {
     bottomStatsBar?.classList.add("visible");
   }
@@ -260,7 +289,6 @@ window.addEventListener("message", (event) => {
 summaryBtn?.addEventListener("click", () => {
   if (!frame || frame.src === "about:blank") return;
 
-  // PostMessage into the swipe page iframe to trigger summary chat
   const approved = parseInt(statApproved?.textContent || "0", 10);
   const changes = parseInt(statChanges?.textContent || "0", 10);
   const skipped = parseInt(statSkipped?.textContent || "0", 10);
@@ -271,7 +299,6 @@ summaryBtn?.addEventListener("click", () => {
     return;
   }
 
-  // Inject the summary request via postMessage into the iframe
   try {
     frame.contentWindow.postMessage(
       {
@@ -280,16 +307,10 @@ summaryBtn?.addEventListener("click", () => {
       },
       "*"
     );
-    showToast("✓ Generating review summary via Gemma…", "success", 3000);
-  } catch (e) {
+    showToast("✓ Generating review summary via Gemma AI…", "success", 3000);
+  } catch {
     showToast("Could not reach swipe panel. Try opening in a tab ↗", "error");
   }
 });
-
-// Patch setMode to also update bottom bar visibility
-const _origSetMode = setMode;
-// Override to also call updateBottomBar after mode switches
-tabDiagram.addEventListener("click", () => { updateBottomBar(); });
-tabPRs.addEventListener("click", () => { updateBottomBar(); });
 
 initializeState();

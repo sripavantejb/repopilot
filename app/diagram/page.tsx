@@ -53,7 +53,15 @@ export default function DiagramPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedModule, setSelectedModule] = useState<string | null>(null)
+  const [isEmbedded, setIsEmbedded] = useState(false)
   const mermaidRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      setIsEmbedded(params.get('embed') === '1' || window.self !== window.top)
+    }
+  }, [])
 
   // Gitora-style: explain panel state
   const [explainState, setExplainState] = useState<ExplainState>({
@@ -233,74 +241,96 @@ export default function DiagramPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-black/[0.06] bg-[#FDF8F0]/90 px-4 backdrop-blur-md lg:px-8 dark:bg-background/90 dark:border-border">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1a1a1a] text-white dark:bg-white dark:text-black">
-              <span className="text-[11px] font-bold">RP</span>
-            </div>
-            <span className="skew-wordmark font-black tracking-[-0.04em] text-base text-[#1a1a1a] dark:text-foreground">
-              {"REPOPILOT".split("").map((char, i) => (
-                <span key={i}>{char}</span>
-              ))}
-            </span>
-            <span className="rounded-full bg-[#B4C7EF]/30 border border-black/[0.08] px-2.5 py-0.5 text-xs font-semibold text-[#1a1a1a] dark:text-foreground dark:border-border">
-              Architecture AST
-            </span>
-          </Link>
-        </div>
-
-        {/* Center: Repo search */}
-        <div className="flex flex-1 justify-center px-4 max-w-lg">
-          <div className="relative w-full">
-            <input
-              type="text"
-              value={repoInput}
-              onChange={(e) => setRepoInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && loadDiagram(repoInput)}
-              placeholder="owner/repo (e.g. facebook/react)"
-              disabled={isLoading}
-              className="w-full rounded-full border border-black/[0.08] bg-white dark:bg-secondary dark:border-border px-4 py-2 pl-10 pr-24 text-sm text-[#1a1a1a] dark:text-foreground placeholder:text-[#888] shadow-sm focus:border-black/30 focus:outline-none"
-            />
-            <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#888]" />
-            <button
-              onClick={() => loadDiagram(repoInput)}
-              disabled={isLoading}
-              className="absolute right-1.5 top-1.5 rounded-full bg-[#1a1a1a] dark:bg-foreground px-3.5 py-1 text-xs font-semibold text-white dark:text-background transition hover:bg-black"
-            >
-              Analyze
-            </button>
+      {!isEmbedded ? (
+        <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-black/[0.06] bg-[#FDF8F0]/90 px-4 backdrop-blur-md lg:px-8 dark:bg-background/90 dark:border-border">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1a1a1a] text-white dark:bg-white dark:text-black">
+                <span className="text-[11px] font-bold">RP</span>
+              </div>
+              <span className="skew-wordmark font-black tracking-[-0.04em] text-base text-[#1a1a1a] dark:text-foreground">
+                {"REPOPILOT".split("").map((char, i) => (
+                  <span key={i}>{char}</span>
+                ))}
+              </span>
+              <span className="rounded-full bg-[#B4C7EF]/30 border border-black/[0.08] px-2.5 py-0.5 text-xs font-semibold text-[#1a1a1a] dark:text-foreground dark:border-border">
+                Architecture AST
+              </span>
+            </Link>
           </div>
-        </div>
 
-        {/* Right CTAs */}
-        <div className="flex items-center gap-2">
-          {activeRepo && (
-            <>
+          {/* Center: Repo search */}
+          <div className="flex flex-1 justify-center px-4 max-w-lg">
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={repoInput}
+                onChange={(e) => setRepoInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && loadDiagram(repoInput)}
+                placeholder="owner/repo (e.g. facebook/react)"
+                disabled={isLoading}
+                className="w-full rounded-full border border-black/[0.08] bg-white dark:bg-secondary dark:border-border px-4 py-2 pl-10 pr-24 text-sm text-[#1a1a1a] dark:text-foreground placeholder:text-[#888] shadow-sm focus:border-black/30 focus:outline-none"
+              />
+              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#888]" />
+              <button
+                onClick={() => loadDiagram(repoInput)}
+                disabled={isLoading}
+                className="absolute right-1.5 top-1.5 rounded-full bg-[#1a1a1a] dark:bg-foreground px-3.5 py-1 text-xs font-semibold text-white dark:text-background transition hover:bg-black"
+              >
+                Analyze
+              </button>
+            </div>
+          </div>
+
+          {/* Right CTAs */}
+          <div className="flex items-center gap-2">
+            {activeRepo && (
+              <>
+                <button
+                  onClick={() => setChatOpen((v) => !v)}
+                  title="Ask Gemma about this codebase"
+                  className={`flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-all ${
+                    chatOpen
+                      ? 'border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                      : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
+                  }`}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Ask Gemma</span>
+                </button>
+                <Link
+                  href={`/swipe?repo=${encodeURIComponent(activeRepo)}`}
+                  className="flex items-center gap-1.5 rounded-full bg-[#C8E6C9]/40 border border-[#2E7D32]/30 px-3.5 py-1.5 text-xs font-semibold text-[#2E7D32] transition hover:bg-[#C8E6C9]/60 shadow-sm"
+                >
+                  <Layers className="h-3.5 w-3.5" />
+                  <span>Triage PRs</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </>
+            )}
+          </div>
+        </header>
+      ) : (
+        <div className="sticky top-0 z-40 flex h-9 items-center justify-between border-b border-black/[0.06] bg-[#FDF8F0]/95 px-3 backdrop-blur-md dark:bg-background/95 dark:border-border">
+          <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">{activeRepo ?? 'Architecture AST'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {activeRepo && (
               <button
                 onClick={() => setChatOpen((v) => !v)}
-                title="Ask Gemma about this codebase"
-                className={`flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-all ${
-                  chatOpen
-                    ? 'border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                    : 'border-border text-muted-foreground hover:border-foreground hover:text-foreground'
+                className={`flex items-center gap-1 rounded px-2 py-0.5 font-mono text-xs transition-colors ${
+                  chatOpen ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400 font-semibold' : 'text-purple-600 dark:text-purple-400 hover:bg-purple-500/10'
                 }`}
+                title="Ask Gemma about codebase architecture"
               >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Ask Gemma</span>
+                <MessageSquare className="h-3 w-3" />
+                <span>Ask Gemma</span>
               </button>
-              <Link
-                href={`/swipe?repo=${encodeURIComponent(activeRepo)}`}
-                className="flex items-center gap-1.5 rounded-full bg-[#C8E6C9]/40 border border-[#2E7D32]/30 px-3.5 py-1.5 text-xs font-semibold text-[#2E7D32] transition hover:bg-[#C8E6C9]/60 shadow-sm"
-              >
-                <Layers className="h-3.5 w-3.5" />
-                <span>Triage PRs</span>
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </header>
+      )}
 
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">

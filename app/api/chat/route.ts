@@ -4,7 +4,7 @@
  * Gracefully degrades when AI Gateway is unavailable.
  */
 
-import { streamText } from "ai";
+import { streamText, tool } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq, and, sql } from "drizzle-orm";
@@ -27,7 +27,7 @@ Answer questions concisely — reviewers are busy. Lead with the most actionable
 Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
       messages: messages ?? [],
       tools: {
-        risk_score: {
+        risk_score: tool({
           description: "Get the heuristic risk score (0-100) for the active PR with reasons.",
           parameters: z.object({}),
           execute: async () => {
@@ -57,8 +57,8 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
               return { score: 20, reasons: [{ text: "Standard PR modifications", source: "diff" }] };
             }
           },
-        },
-        contributor_history: {
+        }),
+        contributor_history: tool({
           description: "Get the PR history and merge rate for the author of the active PR.",
           parameters: z.object({}),
           execute: async () => {
@@ -91,8 +91,8 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
               return { handle: "contributor", totalPrs: 1, mergedPrs: 0, mergeRate: "0%", firstPrAt: null };
             }
           },
-        },
-        list_changed_files: {
+        }),
+        list_changed_files: tool({
           description: "List all files changed in the active PR with their diff stats.",
           parameters: z.object({}),
           execute: async () => {
@@ -110,8 +110,8 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
               return { files: [] };
             }
           },
-        },
-        find_callers: {
+        }),
+        find_callers: tool({
           description: "Search changed file patches for usages of a function or symbol.",
           parameters: z.object({ name: z.string().describe("Function or symbol name to search for") }),
           execute: async ({ name }) => {
@@ -128,16 +128,16 @@ Current PR ID: ${prId ?? "unknown"}. Repo ID: ${repoId ?? "unknown"}.`,
                 .limit(10);
               return {
                 symbol: name,
-                results: matches.map((f) => ({
+                results: matches.map((f: { filename: string; patch: string | null }) => ({
                   filename: f.filename,
-                  lines: (f.patch ?? "").split("\n").filter((l) => l.includes(name)).slice(0, 5),
+                  lines: (f.patch ?? "").split("\n").filter((l: string) => l.includes(name)).slice(0, 5),
                 })),
               };
             } catch {
               return { symbol: name, results: [] };
             }
           },
-        },
+        }),
       },
       maxSteps: 3,
     });

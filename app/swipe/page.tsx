@@ -179,6 +179,14 @@ export default function SwipePage() {
   const [prList, setPrList] = useState<PullRequest[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isLoadingPRs, setIsLoadingPRs] = useState(false)
+  const [isEmbedded, setIsEmbedded] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      setIsEmbedded(params.get('embed') === '1' || window.self !== window.top)
+    }
+  }, [])
 
   // Context state
   const [context, setContext] = useState<AIContext | null>(null)
@@ -788,21 +796,39 @@ export default function SwipePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header
-        currentPR={currentIndex + 1}
-        totalPRs={prList.length}
-        streak={streak}
-        defaultRepo={repoInput}
-        apiKey={userApiKey}
-        githubConfig={githubConfig}
-        onToggleHints={() => setHintsOpen(true)}
-        onRepoSubmit={handleRepoSubmit}
-        onApiKeyChange={handleApiKeyChange}
-        onGitHubConfigChange={handleGitHubConfigChange}
-        isLoading={isLoading}
-      />
+      {!isEmbedded ? (
+        <Header
+          currentPR={currentIndex + 1}
+          totalPRs={prList.length}
+          streak={streak}
+          defaultRepo={repoInput}
+          apiKey={userApiKey}
+          githubConfig={githubConfig}
+          onToggleHints={() => setHintsOpen(true)}
+          onRepoSubmit={handleRepoSubmit}
+          onApiKeyChange={handleApiKeyChange}
+          onGitHubConfigChange={handleGitHubConfigChange}
+          isLoading={isLoading}
+        />
+      ) : (
+        <div className="sticky top-0 z-40 flex h-9 items-center justify-between border-b border-border bg-background/95 px-3 py-1 backdrop-blur-md">
+          <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">PR {Math.min(currentIndex + 1, prList.length)} of {prList.length}</span>
+            {streak >= 2 && <span className="font-semibold text-emerald-600">· 🔥 {streak} in a row</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setHintsOpen(true)}
+              className="rounded px-1.5 py-0.5 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+              title="Shortcuts (?)"
+            >
+              ?
+            </button>
+          </div>
+        </div>
+      )}
 
-      <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-8 px-4 py-6 pb-24 lg:flex-row lg:px-8 lg:pb-20">
+      <main className={`mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-3 py-4 lg:flex-row lg:px-8 ${isEmbedded ? "pb-6" : "pb-24 lg:pb-20"}`}>
         {/* Left column - Card stack or Session Summary */}
         <div className="w-full lg:w-[60%]">
           {isIngesting || isLoadingPRs ? (
@@ -924,13 +950,15 @@ export default function SwipePage() {
         isLoadingImpact={isLoadingImpact}
       />
 
-      <BottomStrip
-        stats={stats}
-        onFilterClick={(action) => setHistoryFilter(action)}
-        onSummary={() => handleSendMessage(
-          `Summarize my review session so far: I approved ${stats.approved}, requested changes on ${stats.changesRequested}, and skipped ${stats.skipped} PRs. What patterns stand out and what should I focus on next?`
-        )}
-      />
+      {!isEmbedded && (
+        <BottomStrip
+          stats={stats}
+          onFilterClick={(action) => setHistoryFilter(action)}
+          onSummary={() => handleSendMessage(
+            `Summarize my review session so far: I approved ${stats.approved}, requested changes on ${stats.changesRequested}, and skipped ${stats.skipped} PRs. What patterns stand out and what should I focus on next?`
+          )}
+        />
+      )}
 
       <KeyboardHints open={hintsOpen} onClose={() => setHintsOpen(false)} />
 

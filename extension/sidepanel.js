@@ -1,7 +1,8 @@
 // RepoPilot Chrome Extension Side Panel Logic
 // Unified single-origin engine: Architecture Diagram + PR Review & Triage
 
-const APP_BASE_URL = "http://localhost:3000";
+const PROD_BASE_URL = "https://repopilot-orcin.vercel.app";
+let APP_BASE_URL = PROD_BASE_URL;
 
 const frame = document.getElementById("repopilot-frame");
 const emptyState = document.getElementById("empty-state");
@@ -91,6 +92,13 @@ function updateRepoView(repoFullName, isIssues, isPulls, isCode) {
 
 // Check session storage on initial side panel open
 async function initializeState() {
+  const sync = await chrome.storage.sync.get(["customBackendUrl"]);
+  if (sync.customBackendUrl) {
+    APP_BASE_URL = sync.customBackendUrl.replace(/\/$/, "");
+  } else {
+    APP_BASE_URL = PROD_BASE_URL;
+  }
+
   const session = await chrome.storage.session.get([
     "activeRepo",
     "isIssues",

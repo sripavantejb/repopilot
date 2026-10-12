@@ -13,11 +13,20 @@ import {
   Code2, 
   Terminal, 
   ExternalLink,
-  Github
+  Github,
+  Download,
+  Chrome,
+  Copy,
+  Check
 } from "lucide-react"
+import { toast } from "sonner"
+import { ChromeExtensionModal } from "@/components/chrome-extension-modal"
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
+  const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false)
+  const [isExtensionInstalled, setIsExtensionInstalled] = useState(false)
+  const [copiedExtensionsUrl, setCopiedExtensionsUrl] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,6 +35,52 @@ export default function LandingPage() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Listen for extension handshake
+  useEffect(() => {
+    const handleStatus = (e: any) => {
+      if (e.detail?.installed || e.data?.installed) {
+        setIsExtensionInstalled(true)
+      }
+    }
+
+    if (typeof document !== "undefined" && document.documentElement.getAttribute("data-repopilot-extension") === "true") {
+      setIsExtensionInstalled(true)
+    }
+
+    window.addEventListener("repopilot:extension:status", handleStatus)
+    window.addEventListener("message", handleStatus)
+
+    return () => {
+      window.removeEventListener("repopilot:extension:status", handleStatus)
+      window.removeEventListener("message", handleStatus)
+    }
+  }, [])
+
+  const handleDirectDownloadZip = () => {
+    const link = document.createElement("a")
+    link.href = "/api/extension/download"
+    link.download = "repopilot-extension.zip"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success("Downloading repopilot-extension.zip (16.8 KB)", {
+      description: "Extract the zip and load unpacked via chrome://extensions.",
+    })
+  }
+
+  const handleCopyExtensionsUrl = async () => {
+    try {
+      await navigator.clipboard.writeText("chrome://extensions")
+      setCopiedExtensionsUrl(true)
+      toast.success("Copied 'chrome://extensions' to clipboard!", {
+        description: "Open a new tab (⌘+T) and paste into the address bar.",
+      })
+      setTimeout(() => setCopiedExtensionsUrl(false), 2500)
+    } catch {
+      toast.error("Failed to copy URL. Open chrome://extensions manually.")
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#FDF8F0] text-[#1a1a1a] selection:bg-[#B4C7EF] selection:text-[#1a1a1a] font-sans">
@@ -69,6 +124,16 @@ export default function LandingPage() {
 
         {/* Vertical divider */}
         <div className="hidden lg:block w-px h-5 bg-black/10 flex-shrink-0" />
+
+        {/* Chrome Extension Pill */}
+        <button
+          onClick={() => setIsExtensionModalOpen(true)}
+          className="hidden sm:flex items-center gap-1.5 rounded-full bg-white/90 hover:bg-white border border-black/[0.08] px-3.5 py-1.5 text-[13px] font-medium text-[#1a1a1a] transition-all hover:-translate-y-0.5 shadow-sm flex-shrink-0"
+        >
+          <Chrome className="h-3.5 w-3.5 text-[#2E7D32]" />
+          <span>Chrome DevTools</span>
+          <span className="text-[10px] bg-[#C8E6C9] text-[#2E7D32] px-1.5 py-0.2 rounded-full font-bold">.ZIP</span>
+        </button>
 
         {/* Primary CTA pill */}
         <Link
@@ -135,9 +200,17 @@ export default function LandingPage() {
                 <span>Launch Review Deck</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
+              <button
+                onClick={() => setIsExtensionModalOpen(true)}
+                className="flex items-center gap-2 rounded-full bg-white/95 border border-black/[0.08] px-7 py-3.5 text-[15px] font-semibold text-[#1a1a1a] shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all hover:bg-white hover:-translate-y-0.5"
+              >
+                <Chrome className="h-4 w-4 text-[#2E7D32]" />
+                <span>Load Chrome DevTools</span>
+                <span className="text-[11px] font-mono bg-[#f0ede6] text-[#666] px-2 py-0.5 rounded-full font-semibold">.zip</span>
+              </button>
               <Link
                 href="/diagram"
-                className="flex items-center gap-2 rounded-full bg-white/90 border border-black/[0.08] px-7 py-3.5 text-[15px] font-semibold text-[#1a1a1a] shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all hover:bg-white hover:-translate-y-0.5"
+                className="flex items-center gap-2 rounded-full bg-white/70 border border-black/[0.06] px-6 py-3.5 text-[15px] font-medium text-[#333] transition-all hover:bg-white/90"
               >
                 <Layers className="h-4 w-4 text-[#B4C7EF]" />
                 <span>Architecture Graph</span>
@@ -151,6 +224,30 @@ export default function LandingPage() {
                 <Github className="h-4 w-4" />
                 <span>GitHub</span>
               </a>
+            </div>
+
+            {/* Direct extension status banner */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-[12px] text-[#555]">
+              <span className={`w-2 h-2 rounded-full ${isExtensionInstalled ? "bg-[#2E7D32] animate-pulse" : "bg-[#f59e0b]"}`} />
+              <span className="font-medium">
+                {isExtensionInstalled ? "RepoPilot Extension Active in Chrome" : "Chrome DevTools & Side Panel Available"}
+              </span>
+              <span className="text-black/30">•</span>
+              <button
+                onClick={handleDirectDownloadZip}
+                className="underline font-semibold text-[#1a1a1a] hover:text-black flex items-center gap-1 transition"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download .ZIP (16.8 KB)</span>
+              </button>
+              <span className="text-black/30">•</span>
+              <button
+                onClick={handleCopyExtensionsUrl}
+                className="underline font-semibold text-[#1a1a1a] hover:text-black flex items-center gap-1 transition"
+              >
+                {copiedExtensionsUrl ? <Check className="w-3.5 h-3.5 text-[#2E7D32]" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedExtensionsUrl ? "Copied 'chrome://extensions'" : "Copy chrome://extensions"}</span>
+              </button>
             </div>
           </div>
 
@@ -361,37 +458,49 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Card 3: Soft Green (#C8E6C9) - Chrome Side Panel */}
+          {/* Card 3: Soft Green (#C8E6C9) - Chrome Side Panel & DevTools */}
           <div className="rounded-[24px] bg-[#C8E6C9] p-8 md:p-12 flex flex-col justify-between overflow-hidden shadow-sm">
             <div>
-              <div className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#333] mb-3">
-                Seamless Workflow
+              <div className="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#333] mb-3 flex items-center justify-between">
+                <span>Seamless Workflow</span>
+                <span className="text-[11px] bg-white/80 px-2 py-0.5 rounded-full font-mono text-[#2E7D32]">Manifest V3</span>
               </div>
               <h3 className="text-[28px] md:text-[34px] font-serif font-[500] text-[#1a1a1a] leading-tight">
-                One-Click Chrome <em>Side Panel</em>
+                One-Click Chrome <em>Side Panel & DevTools</em>
               </h3>
               <p className="mt-4 text-[15px] leading-[1.7] text-[#333] max-w-[420px]">
-                Review right on github.com without leaving your browser tab. RepoPilot slides out as a native Chrome side panel providing instant AI summaries and diff breakdowns.
+                Review right on github.com or inside Chrome Developer Tools (F12). RepoPilot slides out as a native side panel and DevTools panel with inline architectural explanations and instant PR analysis.
               </p>
-              <div className="mt-6">
-                <a
-                  href="#how-it-works"
-                  className="inline-flex items-center gap-2 rounded-full bg-white/75 hover:bg-white/95 text-[#1a1a1a] px-6 py-2.5 text-[14px] font-semibold transition-all shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+              <div className="mt-6 flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={handleDirectDownloadZip}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] hover:bg-black text-white px-5 py-2.5 text-[13px] font-semibold transition-all shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:-translate-y-0.5"
                 >
-                  Load Extension
-                  <ArrowRight className="h-4 w-4" />
-                </a>
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download .ZIP</span>
+                </button>
+                <button
+                  onClick={() => setIsExtensionModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/80 hover:bg-white text-[#1a1a1a] px-5 py-2.5 text-[13px] font-semibold transition-all shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:-translate-y-0.5"
+                >
+                  <Chrome className="h-3.5 w-3.5 text-[#2E7D32]" />
+                  <span>Load to Chrome DevTools</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
 
             {/* Visual mini-mock */}
             <div className="mt-8 p-4 rounded-[14px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
               <div className="flex items-center justify-between text-[11px] font-medium text-[#333] pb-2 border-b">
-                <span>github.com/facebook/react/pull/31400</span>
-                <span className="w-2 h-2 rounded-full bg-[#2E7D32]" />
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#2E7D32]" />
+                  <span>Chrome DevTools & Side Panel</span>
+                </div>
+                <span className="font-mono text-[10px] bg-[#f5f5f5] px-2 py-0.5 rounded text-[#666]">F12 or Side Panel</span>
               </div>
               <p className="mt-2 text-[12px] text-[#444]">
-                Sidepanel docks alongside PR conversations with inline architectural explanations.
+                Side panel docks alongside PR conversations, plus a dedicated "RepoPilot" tab inside Chrome Developer Tools.
               </p>
             </div>
           </div>
@@ -433,6 +542,111 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Chrome Developer Tools & Side Panel Showcase Banner */}
+      <section className="py-12 px-4 md:px-12 max-w-6xl mx-auto">
+        <div className="rounded-[24px] bg-white border border-black/[0.08] p-8 md:p-12 shadow-[0_12px_40px_rgba(0,0,0,0.06)] relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute -right-24 -top-24 w-96 h-96 rounded-full bg-[#C8E6C9]/40 blur-3xl pointer-events-none" />
+          <div className="absolute -left-24 -bottom-24 w-96 h-96 rounded-full bg-[#B4C7EF]/30 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Column: Copy & Actions */}
+            <div className="lg:col-span-7">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#C8E6C9]/60 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#2E7D32] mb-3">
+                <Chrome className="w-3.5 h-3.5" />
+                <span>Developer Mode Ready • Manifest V3</span>
+              </div>
+              <h3 className="text-[28px] md:text-[38px] font-serif font-[500] text-[#1a1a1a] leading-tight">
+                Download ZIP & Load Directly into <em>Chrome Developer Tools</em>
+              </h3>
+              <p className="mt-4 text-[15px] leading-[1.7] text-[#555] max-w-[540px]">
+                No waiting for web store approvals. Download the pre-packaged <code className="bg-[#f5f5f5] px-1.5 py-0.5 rounded font-mono text-[12px]">repopilot-extension.zip</code>, load unpacked into Chrome in seconds, and review pull requests natively inside Chrome DevTools (F12) or the companion side panel.
+              </p>
+
+              {/* Action Buttons */}
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleDirectDownloadZip}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] hover:bg-black text-white px-6 py-3 text-[14px] font-semibold transition-all shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:-translate-y-0.5"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Extension (.zip)</span>
+                  <span className="text-[11px] font-mono bg-white/20 text-white px-2 py-0.5 rounded-full">16.8 KB</span>
+                </button>
+
+                <button
+                  onClick={handleCopyExtensionsUrl}
+                  className="inline-flex items-center gap-2 rounded-full bg-white border border-black/10 hover:bg-black/[0.02] text-[#1a1a1a] px-5 py-3 text-[14px] font-semibold transition-all shadow-sm hover:-translate-y-0.5"
+                >
+                  {copiedExtensionsUrl ? <Check className="w-4 h-4 text-[#2E7D32]" /> : <Copy className="w-4 h-4 text-[#666]" />}
+                  <span>{copiedExtensionsUrl ? "Copied 'chrome://extensions'!" : "Copy chrome://extensions"}</span>
+                </button>
+
+                <button
+                  onClick={() => setIsExtensionModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#B4C7EF]/30 hover:bg-[#B4C7EF]/50 text-[#1a1a1a] px-5 py-3 text-[14px] font-semibold transition-all hover:-translate-y-0.5"
+                >
+                  <span>Interactive Setup Guide</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Status Ribbon */}
+              <div className="mt-6 flex items-center gap-3 text-[13px] text-[#666]">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${isExtensionInstalled ? "bg-[#2E7D32] animate-pulse" : "bg-[#f59e0b]"}`} />
+                  <span className="font-medium text-[#1a1a1a]">
+                    {isExtensionInstalled ? "Status: Active & Handshake Established" : "Status: Awaiting Unpacked Load in Chrome"}
+                  </span>
+                </div>
+                <span className="text-black/20">•</span>
+                <span>Includes DevTools Tab & Side Panel</span>
+              </div>
+            </div>
+
+            {/* Right Column: Mini DevTools Preview */}
+            <div className="lg:col-span-5">
+              <div className="rounded-[16px] bg-[#1E1E1E] text-white p-4 shadow-xl border border-white/10 font-mono text-[12px]">
+                {/* DevTools window header */}
+                <div className="flex items-center justify-between pb-3 border-b border-white/10 text-[11px] text-[#888]">
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    <span className="text-[#888]">Elements</span>
+                    <span className="text-[#888]">Console</span>
+                    <span className="text-[#888]">Sources</span>
+                    <span className="text-[#888]">Network</span>
+                    <span className="text-white bg-[#333] px-2 py-0.5 rounded text-[10px] font-semibold flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF50]" />
+                      RepoPilot
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-[#666]">DevTools F12</div>
+                </div>
+
+                {/* DevTools panel content */}
+                <div className="pt-3 space-y-2.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-[#9CDCFE]">target:</span>
+                    <span className="text-[#CE9178]">"github.com/facebook/react/pull/31400"</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-[#9CDCFE]">risk_score:</span>
+                    <span className="text-[#4EC9B0]">92 / 100 (Safe)</span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-[#9CDCFE]">ast_impact:</span>
+                    <span className="text-[#DCDCAA]">3 modules downstream</span>
+                  </div>
+                  <div className="p-2.5 rounded bg-[#2D2D2D] text-[11px] text-[#DDD] space-y-1">
+                    <div className="text-[#4CAF50] font-bold">✓ Ready for instant triage</div>
+                    <div className="text-[10px] text-[#AAA]">Hotkeys: [J] Approve • [F] Request Changes • [Space] Next</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 7.12 Install & Setup Steps Card */}
       <section id="how-it-works" className="py-20 px-4 md:px-12 max-w-4xl mx-auto">
         <div className="text-center mb-12">
@@ -465,13 +679,42 @@ export default function LandingPage() {
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#B4C7EF] flex items-center justify-center font-semibold text-[13px] text-[#1a1a1a]">
               2
             </div>
-            <div>
-              <h4 className="text-[16px] font-semibold text-[#1a1a1a] font-sans">
-                Load the Chrome Extension in Developer Mode
-              </h4>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="text-[16px] font-semibold text-[#1a1a1a] font-sans">
+                  Download ZIP & Load to Chrome Developer Tools
+                </h4>
+                <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium ${isExtensionInstalled ? "bg-[#E8F5E9] text-[#2E7D32]" : "bg-[#FFF8E1] text-[#b45309]"}`}>
+                  {isExtensionInstalled ? "✓ Active in Chrome" : "Awaiting Unpacked"}
+                </span>
+              </div>
               <p className="mt-1 text-[14px] text-[#666] leading-[1.6]">
-                Go to <code className="bg-[#f5f5f5] px-1.5 py-0.5 rounded text-[12px] font-mono">chrome://extensions</code>, enable Developer mode, click <span className="font-semibold text-[#1a1a1a]">Load unpacked</span>, and select the <code className="bg-[#f5f5f5] px-1.5 py-0.5 rounded text-[12px] font-mono">/extension</code> directory in this repo.
+                Download the extension ZIP below, unzip it, and load it unpacked in Chrome to enable both the Side Panel and the Chrome Developer Tools (F12) panel.
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleDirectDownloadZip}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1a1a1a] text-white text-[12px] font-semibold hover:bg-black transition shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download .ZIP (16.8 KB)</span>
+                </button>
+                <button
+                  onClick={handleCopyExtensionsUrl}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-black/10 text-[#333] text-[12px] font-medium hover:bg-white/80 transition shadow-sm"
+                >
+                  {copiedExtensionsUrl ? <Check className="w-3.5 h-3.5 text-[#2E7D32]" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedExtensionsUrl ? "Copied 'chrome://extensions'" : "Copy chrome://extensions"}</span>
+                </button>
+                <button
+                  onClick={() => setIsExtensionModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#F0F4FF] border border-[#B4C7EF] text-[#1a1a1a] text-[12px] font-semibold hover:bg-[#E5EEFF] transition shadow-sm"
+                >
+                  <Chrome className="w-3.5 h-3.5 text-[#2E7D32]" />
+                  <span>Interactive Setup Guide</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
 

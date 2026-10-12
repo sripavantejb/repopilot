@@ -48,13 +48,19 @@ export function Header({ currentPR, totalPRs, streak, defaultRepo = '', apiKey =
     <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 lg:px-8">
       {/* Left: Wordmark */}
       <div className="flex items-center gap-3">
-        <Link href="/" className="flex items-center gap-1.5 font-mono text-lg font-bold tracking-tight text-foreground">
-          <span className="text-[#22C55E] text-lg">•</span>
-          <span>RepoPilot</span>
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1a1a1a] text-white">
+            <span className="text-[11px] font-bold">RP</span>
+          </div>
+          <span className="skew-wordmark font-black tracking-[-0.04em] text-base text-foreground">
+            {"REPOPILOT".split("").map((char, i) => (
+              <span key={i}>{char}</span>
+            ))}
+          </span>
         </Link>
         <Link
           href={repo ? `/diagram?repo=${encodeURIComponent(repo)}` : '/diagram'}
-          className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 font-mono text-xs font-semibold text-blue-400 transition hover:bg-blue-500/20"
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-[#B4C7EF]/30 px-3 py-1 text-xs font-semibold text-foreground transition hover:bg-[#B4C7EF]/50 shadow-sm"
         >
           <span>Architecture Graph</span>
         </Link>

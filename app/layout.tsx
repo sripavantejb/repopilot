@@ -1,17 +1,20 @@
 import type { Metadata } from 'next'
-import { Geist, JetBrains_Mono } from 'next/font/google'
+import { Playfair_Display, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
-const geist = Geist({ 
+const playfair = Playfair_Display({ 
   subsets: ["latin"],
-  variable: '--font-geist',
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: '--font-playfair',
 });
 
-const jetbrainsMono = JetBrains_Mono({ 
+const inter = Inter({ 
   subsets: ["latin"],
-  variable: '--font-jetbrains-mono',
+  weight: ["400", "500", "600", "700", "900"],
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -43,12 +46,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${playfair.variable} ${inter.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-background text-foreground" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}

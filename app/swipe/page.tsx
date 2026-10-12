@@ -331,9 +331,34 @@ export default function SwipePage() {
   const [decisionHistory, setDecisionHistory] = useState<DecisionRecord[]>([])
   const [historyFilter, setHistoryFilter] = useState<SwipeAction | null>(null)
 
+  // Emit stats to parent (Chrome extension side panel) via postMessage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.parent.postMessage(
+        {
+          type: 'REPOPILOT_STATS_UPDATE',
+          stats: {
+            approved: stats.approved,
+            changesRequested: stats.changesRequested,
+            skipped: stats.skipped,
+          },
+          prCount: prList.length,
+          currentIndex,
+          repo: repoInput,
+        },
+        '*'
+      )
+    } catch {
+      // Not in an iframe — ignore
+    }
+  }, [stats, prList.length, currentIndex, repoInput])
+
+
   // Simple streaming chat — avoids @ai-sdk/react v3 protocol issues
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isChatLoading, setIsChatLoading] = useState(false)
+
 
   const sendChatMessage = useCallback(async (content: string) => {
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content }
@@ -379,6 +404,17 @@ export default function SwipePage() {
       setIsChatLoading(false)
     }
   }, [messages, userApiKey, prList, currentIndex, repoId, sessionId])
+
+  // Listen for summary trigger from extension sidepanel iframe parent
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'REPOPILOT_TRIGGER_SUMMARY' && typeof e.data.message === 'string') {
+        sendChatMessage(e.data.message)
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [sendChatMessage])
 
   const startSession = useCallback(async (repoId: string) => {
     const sessionRes = await fetch('/api/session', {

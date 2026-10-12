@@ -203,4 +203,93 @@ defaultDemoBtn.addEventListener("click", () => {
   updateRepoView("resend/resend-node", true, false, false);
 });
 
+// ─── Native Bottom Stats Bar ──────────────────────────────────────────────────
+const bottomStatsBar = document.getElementById("bottom-stats-bar");
+const statApproved = document.getElementById("stat-approved");
+const statChanges = document.getElementById("stat-changes");
+const statSkipped = document.getElementById("stat-skipped");
+const summaryBtn = document.getElementById("summary-btn");
+const toastEl = document.getElementById("toast-msg");
+
+let toastTimer = null;
+
+function showToast(msg, type = "info", durationMs = 4000) {
+  if (!toastEl) return;
+  toastEl.textContent = msg;
+  toastEl.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toastEl.classList.remove("show");
+  }, durationMs);
+}
+
+// Show / hide the bottom stats bar based on current mode
+function updateBottomBar() {
+  if (!bottomStatsBar) return;
+  if (currentMode === "prs" && activeRepoFullName) {
+    bottomStatsBar.classList.add("visible");
+  } else {
+    bottomStatsBar.classList.remove("visible");
+  }
+}
+
+// Listen for postMessages from the swipe page iframe
+window.addEventListener("message", (event) => {
+  if (!event.data || event.data.type !== "REPOPILOT_STATS_UPDATE") return;
+
+  const { stats, prCount, currentIndex: idx, repo } = event.data;
+
+  // Update counters
+  if (statApproved) statApproved.textContent = stats.approved ?? 0;
+  if (statChanges) statChanges.textContent = stats.changesRequested ?? 0;
+  if (statSkipped) statSkipped.textContent = stats.skipped ?? 0;
+
+  // Enable summary button only once at least one decision has been made
+  const totalDecisions = (stats.approved ?? 0) + (stats.changesRequested ?? 0) + (stats.skipped ?? 0);
+  if (summaryBtn) {
+    summaryBtn.disabled = totalDecisions === 0;
+  }
+
+  // Show bar once we have PRs loaded
+  if (prCount > 0 && currentMode === "prs") {
+    bottomStatsBar?.classList.add("visible");
+  }
+});
+
+// "Generate review summary" — send message into the iframe to trigger the chat summary
+summaryBtn?.addEventListener("click", () => {
+  if (!frame || frame.src === "about:blank") return;
+
+  // PostMessage into the swipe page iframe to trigger summary chat
+  const approved = parseInt(statApproved?.textContent || "0", 10);
+  const changes = parseInt(statChanges?.textContent || "0", 10);
+  const skipped = parseInt(statSkipped?.textContent || "0", 10);
+  const total = approved + changes + skipped;
+
+  if (total === 0) {
+    showToast("Review some PRs first — swipe right to approve, left to request changes.", "info");
+    return;
+  }
+
+  // Inject the summary request via postMessage into the iframe
+  try {
+    frame.contentWindow.postMessage(
+      {
+        type: "REPOPILOT_TRIGGER_SUMMARY",
+        message: `Summarize my review session so far: I approved ${approved}, requested changes on ${changes}, and skipped ${skipped} PRs. What patterns stand out and what should I focus on next?`,
+      },
+      "*"
+    );
+    showToast("✓ Generating review summary via Gemma…", "success", 3000);
+  } catch (e) {
+    showToast("Could not reach swipe panel. Try opening in a tab ↗", "error");
+  }
+});
+
+// Patch setMode to also update bottom bar visibility
+const _origSetMode = setMode;
+// Override to also call updateBottomBar after mode switches
+tabDiagram.addEventListener("click", () => { updateBottomBar(); });
+tabPRs.addEventListener("click", () => { updateBottomBar(); });
+
 initializeState();

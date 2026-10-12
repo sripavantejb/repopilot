@@ -727,7 +727,20 @@ export default function SwipePage() {
             'Content-Type': 'application/json',
             ...(userApiKey ? { 'x-user-api-key': userApiKey } : {}),
           },
-          body: JSON.stringify({ action, prId: pr.id, repoId }),
+          body: JSON.stringify({
+            action,
+            prId: pr.id,
+            repoId,
+            prNumber: pr.number,
+            prTitle: pr.title,
+            authorHandle: pr.author?.handle,
+            additions: pr.additions,
+            deletions: pr.deletions,
+            filesChanged: pr.filesChanged,
+            filePath: pr.diff?.filePath,
+            diffLines: pr.diff?.lines,
+            repoFullName: repoInput,
+          }),
         })
         const data = await res.json()
         return formatDeeperResult(action, data)

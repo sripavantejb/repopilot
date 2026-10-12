@@ -2,23 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>RepoPilot Side Panel</title>
   <style>
     :root {
       --cream: #FDF8F0;
       --card-bg: #FFFFFF;
       --border: rgba(0, 0, 0, 0.08);
-      --border-subtle: rgba(0, 0, 0, 0.05);
-      --ink: #1a1a1a;
-      --ink-soft: #333333;
-      --muted: #666666;
-      --faint: #999999;
+      --border-subtle: rgba(0, 0, 0, 0.04);
+      --border-focus: rgba(0, 0, 0, 0.2);
+      --ink: #111827;
+      --ink-soft: #374151;
+      --muted: #64748B;
+      --faint: #94A3B8;
       --soft-blue: #B4C7EF;
       --soft-peach: #FFE8D6;
       --soft-green: #C8E6C9;
       --soft-purple: #E5DEFF;
-      --success: #2E7D32;
+      --success: #16A34A;
+      --danger: #DC2626;
+      --warning: #D97706;
+      --accent: #111827;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-full: 9999px;
     }
 
     * {
@@ -27,33 +34,42 @@
       padding: 0;
     }
 
-    body {
+    html, body {
+      height: 100%;
+      width: 100%;
       background: var(--cream);
       color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* 7.1 Refined Litigo Header */
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── 1. Header ────────────────────────────────────────── */
     header {
-      padding: 10px 14px;
+      height: 48px;
+      min-height: 48px;
+      padding: 0 12px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(253, 248, 240, 0.94);
+      background: rgba(253, 248, 240, 0.95);
       backdrop-filter: blur(16px);
-      z-index: 10;
+      z-index: 30;
+      gap: 8px;
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
+      flex-shrink: 1;
     }
 
     .brand-logo-mark {
@@ -68,130 +84,245 @@
       font-size: 11px;
       font-weight: 900;
       letter-spacing: -0.04em;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     }
 
     .brand-wordmark {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 900;
-      letter-spacing: -0.04em;
+      letter-spacing: -0.03em;
       color: var(--ink);
       display: inline-flex;
+      white-space: nowrap;
     }
 
     .brand-wordmark span {
       display: inline-block;
-      transform: skewX(-8deg);
+      transform: skewX(-7deg);
     }
 
     .brand-badge {
-      background: rgba(46, 125, 50, 0.12);
+      background: rgba(22, 163, 74, 0.12);
       color: var(--success);
-      border: 1px solid rgba(46, 125, 50, 0.2);
-      font-size: 10px;
+      border: 1px solid rgba(22, 163, 74, 0.2);
+      font-size: 9.5px;
       font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 100px;
+      padding: 1.5px 6px;
+      border-radius: var(--radius-full);
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .brand-badge::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--success);
     }
 
     .controls {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      flex-shrink: 0;
     }
 
     .icon-btn {
       background: rgba(255, 255, 255, 0.85);
       border: 1px solid var(--border);
       color: var(--ink-soft);
-      border-radius: 100px;
-      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      padding: 4px 9px;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 4px;
       transition: all 0.15s ease;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      white-space: nowrap;
+      user-select: none;
     }
 
     .icon-btn:hover {
       color: var(--ink);
       background: #FFFFFF;
-      border-color: rgba(0, 0, 0, 0.15);
-      transform: translateY(-1px);
+      border-color: rgba(0, 0, 0, 0.16);
+      transform: translateY(-0.5px);
     }
 
-    /* Segmented Mode Navigation Bar */
+    .icon-btn:active {
+      transform: translateY(0);
+    }
+
+    .spin-icon {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .icon-btn:hover .spin-icon {
+      transform: rotate(180deg);
+    }
+
+    /* ─── 2. Segmented Mode Bar ────────────────────────────── */
     .mode-bar {
       display: flex;
-      background: rgba(245, 240, 230, 0.6);
+      background: rgba(245, 240, 230, 0.7);
       border-bottom: 1px solid var(--border);
-      padding: 6px 12px;
-      gap: 8px;
+      padding: 5px 10px;
+      gap: 6px;
+      flex-shrink: 0;
+      z-index: 25;
     }
 
     .mode-tab {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.6);
+      flex: 1 1 0;
+      min-width: 0;
+      background: rgba(255, 255, 255, 0.65);
       border: 1px solid var(--border-subtle);
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
-      padding: 6px 10px;
-      border-radius: 100px;
+      padding: 5.5px 8px;
+      border-radius: var(--radius-full);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      gap: 5px;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .mode-tab svg {
+      flex-shrink: 0;
+    }
+
+    .mode-tab span.tab-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .mode-tab:hover {
       color: var(--ink);
       background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(0, 0, 0, 0.1);
     }
 
     .mode-tab.active {
       background: var(--ink);
       color: #FFFFFF;
       border-color: var(--ink);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     }
 
+    .tab-badge {
+      display: none;
+      background: rgba(22, 163, 74, 0.2);
+      color: #166534;
+      border-radius: var(--radius-full);
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 0 5px;
+      margin-left: 2px;
+    }
+
+    .mode-tab.active .tab-badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+    }
+
+    .tab-badge.visible {
+      display: inline-block;
+    }
+
+    /* ─── 3. Context & Status Bar ──────────────────────────── */
     .status-bar {
-      padding: 6px 14px;
-      background: rgba(255, 255, 255, 0.5);
+      padding: 5px 12px;
+      background: rgba(255, 255, 255, 0.55);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 11px;
       color: var(--muted);
+      flex-shrink: 0;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .repo-info {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      overflow: hidden;
+      flex-shrink: 1;
     }
 
     .repo-pill {
       color: var(--ink);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-weight: 600;
+      font-size: 10.5px;
       background: rgba(180, 199, 239, 0.35);
       border: 1px solid rgba(0, 0, 0, 0.08);
-      padding: 1px 6px;
+      padding: 1px 7px;
       border-radius: 4px;
+      max-width: 170px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
     }
 
+    .page-tag {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 1px 6px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: var(--radius-full);
+    }
+
+    /* ─── 4. Frame Container & Viewport ────────────────────── */
     .frame-container {
-      flex: 1;
+      flex: 1 1 0;
       width: 100%;
       height: 100%;
       position: relative;
       background: var(--cream);
+      overflow: hidden;
+      display: flex;
     }
 
-    /* Animated RepoPilot Theme Loader */
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      opacity: 0;
+      transition: opacity 0.25s ease-in-out;
+      background: var(--cream);
+      display: block;
+    }
+
+    iframe.loaded {
+      opacity: 1;
+    }
+
+    /* ─── 5. Animated Litigo Loader Overlay ────────────────── */
     .loader-overlay {
       position: absolute;
       inset: 0;
@@ -201,10 +332,10 @@
       align-items: center;
       justify-content: center;
       z-index: 20;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
       opacity: 1;
       visibility: visible;
-      padding: 24px;
+      padding: 20px;
       text-align: center;
     }
 
@@ -218,21 +349,21 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
-      border-radius: 100px;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
       background: rgba(180, 199, 239, 0.35);
       border: 1px solid rgba(0, 0, 0, 0.08);
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
-      color: #1a1a1a;
-      margin-bottom: 16px;
+      color: var(--ink);
+      margin-bottom: 14px;
     }
 
     .loader-pulse-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #2E7D32;
+      background: var(--success);
       animation: pulse 1.5s infinite ease-in-out;
     }
 
@@ -243,12 +374,12 @@
 
     .loader-icon-container {
       position: relative;
-      width: 56px;
-      height: 56px;
+      width: 52px;
+      height: 52px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .loader-ring {
@@ -256,8 +387,8 @@
       inset: 0;
       border-radius: 50%;
       border: 2px solid rgba(0, 0, 0, 0.06);
-      border-top-color: #1a1a1a;
-      animation: spin 1s linear infinite;
+      border-top-color: var(--ink);
+      animation: spin 0.9s linear infinite;
     }
 
     @keyframes spin {
@@ -265,37 +396,37 @@
     }
 
     .loader-logo {
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #1a1a1a;
+      background: var(--ink);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
-      font-size: 13px;
+      font-size: 12px;
       letter-spacing: -0.04em;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
     }
 
     .loader-title {
       font-family: Georgia, serif;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 500;
-      color: #1a1a1a;
+      color: var(--ink);
       margin-bottom: 4px;
     }
 
     .loader-desc {
-      font-size: 12px;
-      color: #666666;
+      font-size: 11.5px;
+      color: var(--muted);
       max-width: 240px;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
     .loader-progress-track {
-      width: 140px;
+      width: 120px;
       height: 3px;
       background: rgba(0, 0, 0, 0.08);
       border-radius: 3px;
@@ -308,9 +439,9 @@
       position: absolute;
       height: 100%;
       width: 40%;
-      background: #1a1a1a;
+      background: var(--ink);
       border-radius: 3px;
-      animation: progressSlide 1.4s ease-in-out infinite;
+      animation: progressSlide 1.3s ease-in-out infinite;
     }
 
     @keyframes progressSlide {
@@ -319,18 +450,7 @@
       100% { left: 100%; width: 30%; }
     }
 
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
-    }
-
-    iframe.loaded {
-      opacity: 1;
-    }
-
+    /* ─── 6. Empty State ───────────────────────────────────── */
     .empty-state {
       padding: 32px 20px;
       text-align: center;
@@ -338,51 +458,68 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 80%;
+      height: 100%;
+      width: 100%;
       gap: 12px;
     }
 
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
     .empty-state h3 {
-      font-size: 15px;
-      color: var(--text);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
     }
 
     .empty-state p {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--muted);
-      max-width: 270px;
+      max-width: 250px;
       line-height: 1.5;
     }
 
     .open-btn {
-      margin-top: 6px;
-      background: var(--accent);
-      color: #000;
+      margin-top: 8px;
+      background: var(--ink);
+      color: #fff;
       border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
+      padding: 7px 16px;
+      border-radius: var(--radius-full);
       font-weight: 600;
-      font-size: 12px;
+      font-size: 11.5px;
       cursor: pointer;
-      transition: background 0.15s ease;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .open-btn:hover {
-      background: var(--accent-hover);
+      background: #000;
+      transform: translateY(-1px);
     }
 
-    /* Native bottom stats bar — mirrors BottomStrip from swipe page */
+    /* ─── 7. Native Bottom Stats Bar (Litigo HUD) ──────────── */
     .bottom-stats-bar {
-      display: none; /* hidden until PR mode is active */
-      height: 44px;
+      display: none;
+      height: 42px;
+      min-height: 42px;
       border-top: 1px solid var(--border);
       background: rgba(253, 248, 240, 0.96);
-      backdrop-filter: blur(12px);
-      padding: 0 14px;
+      backdrop-filter: blur(14px);
+      padding: 0 12px;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
-      z-index: 20;
+      z-index: 30;
       gap: 8px;
     }
 
@@ -393,38 +530,42 @@
     .stats-counters {
       display: flex;
       align-items: center;
-      gap: 0;
+      gap: 3px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 11px;
       color: var(--muted);
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     .stat-chip {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 3px;
       font-weight: 600;
     }
 
-    .stat-chip.approved { color: #22C55E; }
-    .stat-chip.changes { color: #DC2626; }
-    .stat-chip.skipped { color: #D97706; }
+    .stat-chip.approved { color: var(--success); }
+    .stat-chip.changes { color: var(--danger); }
+    .stat-chip.skipped { color: var(--warning); }
 
     .stat-sep {
-      color: rgba(102, 102, 102, 0.5);
-      margin: 0 5px;
+      color: rgba(100, 116, 139, 0.4);
+      margin: 0 3px;
     }
 
     .stat-label {
-      color: rgba(102, 102, 102, 0.65);
+      color: rgba(100, 116, 139, 0.7);
       font-weight: 400;
+      font-size: 10px;
     }
 
     .summary-btn {
-      background: rgba(255, 255, 255, 0.9);
+      background: #FFFFFF;
       border: 1px solid var(--border);
       color: var(--ink);
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       padding: 4px 10px;
       font-size: 10.5px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -433,6 +574,7 @@
       transition: all 0.15s ease;
       white-space: nowrap;
       flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
 
     .summary-btn:hover {
@@ -442,46 +584,34 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
 
+    .summary-btn:active {
+      transform: translateY(0);
+    }
+
     .summary-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
     }
 
-    /* PR counter badge in mode bar */
-    .pr-count-badge {
-      display: none;
-      background: rgba(34, 197, 94, 0.15);
-      color: #166534;
-      border: 1px solid rgba(34, 197, 94, 0.25);
-      border-radius: 100px;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 6px;
-      margin-left: 4px;
-    }
-
-    .pr-count-badge.visible {
-      display: inline-flex;
-    }
-
-    /* Toast notification */
+    /* ─── 8. Toast Notification ────────────────────────────── */
     .toast {
       position: absolute;
-      bottom: 52px;
+      bottom: 50px;
       left: 12px;
       right: 12px;
-      background: #1a1a1a;
-      color: #fff;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 11.5px;
-      line-height: 1.45;
+      background: #111827;
+      color: #FFFFFF;
+      border-radius: var(--radius-md);
+      padding: 9px 13px;
+      font-size: 11px;
+      line-height: 1.4;
       z-index: 100;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.22);
       opacity: 0;
       transform: translateY(8px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transition: opacity 0.22s ease, transform 0.22s ease;
       pointer-events: none;
     }
 
@@ -491,17 +621,50 @@
     }
 
     .toast.error {
-      background: #1a1a1a;
-      border-left: 3px solid #DC2626;
+      border-left: 3px solid var(--danger);
     }
 
     .toast.success {
-      background: #1a1a1a;
-      border-left: 3px solid #22C55E;
+      border-left: 3px solid var(--success);
+    }
+
+    /* ─── 9. Responsive Breakpoints ────────────────────────── */
+    @media (max-width: 400px) {
+      .stat-label {
+        display: none;
+      }
+      .summary-btn {
+        padding: 4px 8px;
+        font-size: 10px;
+      }
+      .brand-badge {
+        display: none;
+      }
+      .repo-pill {
+        max-width: 130px;
+      }
+    }
+
+    @media (max-width: 350px) {
+      header {
+        padding: 0 8px;
+      }
+      .mode-bar {
+        padding: 4px 6px;
+        gap: 4px;
+      }
+      .mode-tab {
+        padding: 5px 6px;
+        font-size: 11px;
+      }
+      .repo-pill {
+        max-width: 100px;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header>
     <div class="brand">
       <div class="brand-logo-mark">RP</div>
@@ -511,40 +674,48 @@
       <span class="brand-badge">Engine</span>
     </div>
     <div class="controls">
-      <button id="refresh-btn" class="icon-btn" title="Reload View">↻</button>
-      <button id="popout-btn" class="icon-btn" title="Open in dedicated tab">↗ Tab</button>
+      <button id="refresh-btn" class="icon-btn" title="Reload View">
+        <span class="spin-icon">↻</span>
+      </button>
+      <button id="popout-btn" class="icon-btn" title="Open in full browser tab">↗ Tab</button>
     </div>
   </header>
 
-  <!-- Dual Mode Bar: Architecture Diagram vs PR/Issue Triage -->
+  <!-- Segmented Mode Bar -->
   <div class="mode-bar">
     <button id="tab-diagram" class="mode-tab diagram-tab">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
         <polyline points="2 17 12 22 22 17"></polyline>
         <polyline points="2 12 12 17 22 12"></polyline>
       </svg>
-      <span>Git Architecture</span>
+      <span class="tab-text">Git Architecture</span>
     </button>
     <button id="tab-prs" class="mode-tab pr-tab">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="18" cy="18" r="3"></circle>
         <circle cx="6" cy="6" r="3"></circle>
         <path d="M13 6h3a2 2 0 0 1 2 2v7"></path>
         <line x1="6" y1="9" x2="6" y2="21"></line>
       </svg>
-      <span>PR & Issue Triage</span>
+      <span class="tab-text">PR & Issue Triage</span>
+      <span class="tab-badge" id="pr-badge">0</span>
     </button>
   </div>
 
+  <!-- Status Bar -->
   <div class="status-bar">
-    <span>Repo: <span id="current-repo" class="repo-pill">None</span></span>
-    <span id="page-tag">Auto-Detecting</span>
+    <div class="repo-info">
+      <span>Repo:</span>
+      <span id="current-repo" class="repo-pill" title="No repository detected">None</span>
+    </div>
+    <span id="page-tag" class="page-tag">Auto-Detecting</span>
   </div>
 
-  <!-- Toast notification -->
+  <!-- Toast Notification -->
   <div class="toast" id="toast-msg"></div>
 
+  <!-- Main Viewport Frame Container -->
   <div class="frame-container" id="frame-container">
     <!-- Animated Litigo / RepoPilot Loader -->
     <div class="loader-overlay" id="loader-overlay">
@@ -563,30 +734,37 @@
       </div>
     </div>
 
+    <!-- Empty State -->
     <div class="empty-state" id="empty-state" style="display: none;">
+      <div class="empty-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
       <h3>No GitHub Repo Detected</h3>
-      <p>Navigate to any GitHub repository or Issues page to auto-activate RepoPilot.</p>
-      <button id="default-demo-btn" class="open-btn">Open Demo</button>
+      <p>Navigate to any GitHub repository or PR page to auto-activate RepoPilot.</p>
+      <button id="default-demo-btn" class="open-btn">Explore Demo Repo</button>
     </div>
+
+    <!-- Embedded App Iframe -->
     <iframe id="repopilot-frame" src="about:blank"></iframe>
   </div>
 
-  <!-- Native bottom stats bar — mirrors BottomStrip from swipe page via postMessage -->
+  <!-- Native Bottom Stats Bar (Syncs live with swipe session via postMessage) -->
   <div class="bottom-stats-bar" id="bottom-stats-bar">
     <div class="stats-counters">
       <span class="stat-chip approved">✓ <span id="stat-approved">0</span></span>
-      <span class="stat-sep">·</span>
       <span class="stat-label">approved</span>
       <span class="stat-sep">·</span>
       <span class="stat-chip changes">✗ <span id="stat-changes">0</span></span>
-      <span class="stat-sep">·</span>
       <span class="stat-label">changes</span>
       <span class="stat-sep">·</span>
       <span class="stat-chip skipped">↓ <span id="stat-skipped">0</span></span>
-      <span class="stat-sep">·</span>
       <span class="stat-label">skipped</span>
     </div>
-    <button class="summary-btn" id="summary-btn" disabled title="Ask Gemma to summarize your review session">
+    <button class="summary-btn" id="summary-btn" disabled title="Ask Gemma AI to summarize your review session">
       Generate review summary
     </button>
   </div>

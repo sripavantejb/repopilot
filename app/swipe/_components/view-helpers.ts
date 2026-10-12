@@ -1,6 +1,65 @@
 import type { PullRequest } from '../_types'
 
 export function localRiskScore(pr: PullRequest): number {
+  // Check if a custom rule set was synced from the RepoPilot extension
+  if (typeof window !== 'undefined') {
+    try {
+      const storedSet = localStorage.getItem('repopilot:activeRuleSet')
+      if (storedSet) {
+        const ruleSet = JSON.parse(storedSet)
+        if (ruleSet && Array.isArray(ruleSet.rules)) {
+          let customScore = 0
+          const churn = (pr.additions || 0) + (pr.deletions || 0)
+          const files = pr.filesChanged || 1
+          const title = (pr.title || '').toLowerCase()
+          const body = (pr.body || '').trim()
+
+          for (const rule of ruleSet.rules) {
+            if (!rule.enabled) continue
+            let triggered = false
+            switch (rule.conditionType) {
+              case 'lines_changed':
+                triggered = churn > (Number(rule.params?.threshold) || 0)
+                break
+              case 'files_changed':
+                triggered = files > (Number(rule.params?.threshold) || 0)
+                break
+              case 'filename_pattern':
+                if (rule.params?.pattern && pr.diff?.filePath) {
+                  try {
+                    const regex = new RegExp(rule.params.pattern, 'i')
+                    triggered = regex.test(pr.diff.filePath)
+                  } catch {}
+                }
+                break
+              case 'title_keyword':
+                if (rule.params?.pattern) {
+                  try {
+                    const regex = new RegExp(rule.params.pattern, 'i')
+                    triggered = regex.test(title)
+                  } catch {}
+                }
+                break
+              case 'short_description':
+                triggered = body.length < (Number(rule.params?.minLength) || 20)
+                break
+              case 'missing_tests':
+                triggered = files > (Number(rule.params?.thresholdFiles) || 3) && !/test|spec/i.test(pr.diff?.filePath || '')
+                break
+              case 'small_pr':
+                triggered = churn > 0 && churn <= (Number(rule.params?.maxLines) || 50)
+                break
+            }
+            if (triggered) {
+              customScore += Number(rule.points) || 0
+            }
+          }
+          return Math.min(100, Math.max(0, customScore))
+        }
+      }
+    } catch {}
+  }
+
   let score = 20
   const title = (pr.title || '').toLowerCase()
   const churn = (pr.additions || 0) + (pr.deletions || 0)

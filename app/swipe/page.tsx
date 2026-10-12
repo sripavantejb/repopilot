@@ -413,14 +413,24 @@ export default function SwipePage() {
     }
   }, [messages, userApiKey, prList, currentIndex, repoId, sessionId])
 
-  // Listen for summary trigger from extension sidepanel iframe parent
+  // Listen for summary trigger & custom rule sets from extension sidepanel iframe parent
   useEffect(() => {
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === 'REPOPILOT_TRIGGER_SUMMARY' && typeof e.data.message === 'string') {
         sendChatMessage(e.data.message)
+      } else if (e.data?.type === 'REPOPILOT_UPDATE_RULESET' && e.data.ruleSet) {
+        try {
+          localStorage.setItem('repopilot:activeRuleSet', JSON.stringify(e.data.ruleSet))
+        } catch {}
       }
     }
     window.addEventListener('message', handleMessage)
+
+    // Request active rule set from extension parent frame if embedded
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'REPOPILOT_REQUEST_RULESET' }, '*')
+    }
+
     return () => window.removeEventListener('message', handleMessage)
   }, [sendChatMessage])
 

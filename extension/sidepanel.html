@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>RepoPilot Side Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --cream: #FDF8F0;
@@ -628,7 +631,551 @@
       border-left: 3px solid var(--success);
     }
 
-    /* ─── 9. Responsive Breakpoints ────────────────────────── */
+    /* ─── 9. Rules Hub & Risk Score Evaluator (Litigo System) ────── */
+    .rules-container {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px;
+      gap: 12px;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    .rules-container.active {
+      display: flex;
+    }
+
+    .rules-section-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 13px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      position: relative;
+    }
+
+    .rules-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .rules-card-title {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rules-card-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    /* Rule Set Selector Bar */
+    .ruleset-select-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ruleset-dropdown {
+      flex: 1 1 160px;
+      padding: 6px 10px;
+      font-size: 11.5px;
+      font-family: inherit;
+      font-weight: 600;
+      color: var(--ink);
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      outline: none;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      transition: border-color 0.15s;
+    }
+
+    .ruleset-dropdown:focus {
+      border-color: var(--ink);
+    }
+
+    .btn-pill-sm {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .btn-pill-sm:hover {
+      background: #000000;
+      color: #FFFFFF;
+      border-color: #000000;
+      transform: translateY(-0.5px);
+    }
+
+    .btn-pill-primary {
+      background: var(--ink);
+      color: #FFFFFF;
+      border-color: var(--ink);
+    }
+
+    .btn-pill-danger {
+      color: var(--danger);
+      border-color: rgba(214, 69, 69, 0.25);
+    }
+
+    .btn-pill-danger:hover {
+      background: var(--danger);
+      color: #FFFFFF;
+      border-color: var(--danger);
+    }
+
+    /* Live Risk Score Gauge & Assessment Card */
+    .risk-score-display {
+      background: linear-gradient(135deg, rgba(255, 232, 214, 0.45) 0%, rgba(255, 255, 255, 0.95) 100%);
+      border: 1px solid rgba(217, 119, 6, 0.2);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .score-banner-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .score-ring-unit {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .score-number-hero {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 38px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      transition: color 0.2s ease;
+    }
+
+    .score-denominator {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .risk-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .risk-status-pill.low {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border-color: rgba(46, 125, 50, 0.2);
+    }
+
+    .risk-status-pill.moderate {
+      background: #FEF3C7;
+      color: #D97706;
+      border-color: rgba(217, 119, 6, 0.25);
+    }
+
+    .risk-status-pill.high {
+      background: #FFF5F5;
+      color: #D64545;
+      border-color: rgba(214, 69, 69, 0.25);
+    }
+
+    .risk-target-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 9px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      gap: 6px;
+    }
+
+    .risk-target-title {
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 220px;
+    }
+
+    /* Breakdown list */
+    .triggered-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .trigger-item {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-left: 3px solid #D64545;
+      border-radius: var(--radius-sm);
+      padding: 7px 10px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11.5px;
+    }
+
+    .trigger-item.discount {
+      border-left-color: #2E7D32;
+    }
+
+    .trigger-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .trigger-name {
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .trigger-reason {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+
+    .category-chip {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.06);
+      color: var(--ink-soft);
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .points-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #D64545;
+      background: #FFF5F5;
+      border: 1px solid rgba(214, 69, 69, 0.2);
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+
+    .points-badge.positive {
+      color: #2E7D32;
+      background: #E8F5E9;
+      border-color: rgba(46, 125, 50, 0.2);
+    }
+
+    /* Simulator Collapsible */
+    .simulator-box {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      background: rgba(250, 250, 248, 0.7);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sim-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .sim-row label {
+      font-weight: 500;
+      color: var(--ink-soft);
+      min-width: 90px;
+    }
+
+    .sim-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--ink);
+    }
+
+    .sim-row input[type="text"], .sim-row input[type="number"] {
+      flex: 1;
+      padding: 4px 8px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #FFFFFF;
+      outline: none;
+    }
+
+    .sim-val-tag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      min-width: 45px;
+      text-align: right;
+    }
+
+    /* Rules List */
+    .rules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .rule-row-item {
+      background: #FAFAF8;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .rule-row-item:hover {
+      background: #FFFFFF;
+      border-color: rgba(0, 0, 0, 0.14);
+    }
+
+    .rule-row-item.disabled {
+      opacity: 0.55;
+    }
+
+    .rule-row-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .rule-row-title-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .rule-row-title {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .rule-row-summary {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 250px;
+    }
+
+    .rule-row-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* Switch toggle */
+    .switch-label {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .switch-label input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #CBD5E1;
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: var(--radius-full);
+    }
+
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+
+    .switch-label input:checked + .switch-slider {
+      background-color: var(--ink);
+    }
+
+    .switch-label input:checked + .switch-slider:before {
+      transform: translateX(14px);
+    }
+
+    .btn-icon-del {
+      background: transparent;
+      border: none;
+      color: var(--faint);
+      cursor: pointer;
+      padding: 3px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+
+    .btn-icon-del:hover {
+      color: var(--danger);
+    }
+
+    /* Modal dialog */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-dialog {
+      background: #FFFFFF;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 360px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-title {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 11.5px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      font-family: inherit;
+      background: #FFFFFF;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--ink);
+    }
+
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    /* ─── 10. Responsive Breakpoints ────────────────────────── */
     @media (max-width: 400px) {
       .stat-label {
         display: none;
@@ -701,6 +1248,13 @@
       <span class="tab-text">PR & Issue Triage</span>
       <span class="tab-badge" id="pr-badge">0</span>
     </button>
+    <button id="tab-rules" class="mode-tab rules-tab">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      </svg>
+      <span class="tab-text">Risk Rules</span>
+      <span class="tab-badge" id="rules-badge">10</span>
+    </button>
   </div>
 
   <!-- Status Bar -->
@@ -750,6 +1304,118 @@
 
     <!-- Embedded App Iframe -->
     <iframe id="repopilot-frame" src="about:blank"></iframe>
+
+    <!-- ─── Native Rules Hub & Risk Score Evaluator View ──────────── -->
+    <div class="rules-container" id="rules-container">
+      <!-- 1. Rule Set Selector & Management Card -->
+      <div class="rules-section-card">
+        <div class="rules-card-top">
+          <div class="rules-card-title">
+            <span>🛡️</span>
+            <span>Risk Rule Sets</span>
+          </div>
+          <div style="display:flex; gap: 4px;">
+            <button id="btn-new-ruleset" class="btn-pill-sm btn-pill-primary" title="Create a new custom rule set">+ New Set</button>
+            <button id="btn-duplicate-ruleset" class="btn-pill-sm" title="Clone active rule set">Copy</button>
+          </div>
+        </div>
+        <div class="rules-card-subtitle" id="ruleset-desc-text">
+          Calibrate deterministic security heuristics and risk scoring weights for this repository.
+        </div>
+        <div class="ruleset-select-bar">
+          <select id="ruleset-select" class="ruleset-dropdown" title="Select active Rule Set"></select>
+          <button id="btn-reset-ruleset" class="btn-pill-sm" title="Reset this preset to default factory settings">Reset</button>
+          <button id="btn-delete-ruleset" class="btn-pill-sm btn-pill-danger" title="Delete custom rule set" style="display:none;">Delete</button>
+        </div>
+      </div>
+
+      <!-- 2. Live Risk Score Assessment Card -->
+      <div class="rules-section-card risk-score-display">
+        <div class="rules-card-top" style="margin-bottom: 6px;">
+          <div class="rules-card-title" style="font-size: 14px;">
+            <span>⚡</span>
+            <span>Evaluated Risk Score</span>
+          </div>
+          <span id="risk-score-status" class="risk-status-pill low">Low Risk</span>
+        </div>
+
+        <div class="score-banner-main">
+          <div class="score-ring-unit">
+            <span id="risk-score-number" class="score-number-hero" style="color: #2E7D32;">20</span>
+            <span class="score-denominator">/ 100</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <button id="btn-eval-active-pr" class="btn-pill-sm" title="Scan and evaluate the current active GitHub tab">
+              ↻ Scan Active PR
+            </button>
+            <button id="btn-toggle-sim" class="btn-pill-sm" style="font-size: 10px; padding: 3px 8px;">
+              Sandbox Simulator ▾
+            </button>
+          </div>
+        </div>
+
+        <div class="risk-target-pill">
+          <span style="color: var(--muted); font-size: 10px;">Target:</span>
+          <span id="risk-target-label" class="risk-target-title">Simulated PR (#sandbox)</span>
+          <span id="risk-target-stats" style="font-family: ui-monospace, SFMono-Regular, monospace; font-size: 10px; color: var(--muted);">+125/-18 · 4 files</span>
+        </div>
+
+        <!-- Interactive PR Simulator (Collapsible) -->
+        <div class="simulator-box" id="simulator-box" style="display: none;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 2px;">
+            🧪 Live Risk Simulator Sandbox
+          </div>
+          <div class="sim-row">
+            <label for="sim-lines">Lines Changed:</label>
+            <input type="range" id="sim-lines" min="0" max="1500" step="25" value="250" />
+            <span class="sim-val-tag" id="sim-lines-val">250</span>
+          </div>
+          <div class="sim-row">
+            <label for="sim-files">Files Changed:</label>
+            <input type="range" id="sim-files" min="1" max="50" step="1" value="4" />
+            <span class="sim-val-tag" id="sim-files-val">4</span>
+          </div>
+          <div class="sim-row">
+            <label for="sim-title">PR Title:</label>
+            <input type="text" id="sim-title" value="feat: add core integration and docs" placeholder="e.g. security: fix token validation" />
+          </div>
+          <div class="sim-row">
+            <label for="sim-filenames">Touched Files:</label>
+            <input type="text" id="sim-filenames" value="src/index.ts, package.json, README.md" placeholder="Comma separated file names" />
+          </div>
+          <div class="sim-row">
+            <label for="sim-author-prs">Prior PRs:</label>
+            <input type="number" id="sim-author-prs" min="0" max="100" value="0" style="max-width: 70px;" />
+            <span style="font-size: 10px; color: var(--muted); margin-left: auto;">(0 = first-time)</span>
+          </div>
+        </div>
+
+        <!-- Triggered Factors Breakdown -->
+        <div style="font-size: 11px; font-weight: 700; color: var(--ink); margin-top: 4px;">
+          Triggered Risk Heuristics (<span id="triggered-count">0</span>)
+        </div>
+        <div class="triggered-list" id="triggered-list">
+          <div style="font-size: 11px; color: var(--muted); font-style: italic; padding: 4px 0;">
+            No risk flags triggered. This PR complies with all active security rules.
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Active Rules List Card -->
+      <div class="rules-section-card">
+        <div class="rules-card-top">
+          <div class="rules-card-title">
+            <span>📋</span>
+            <span>Active Rules (<span id="rules-count-label">0</span>)</span>
+          </div>
+          <button id="btn-add-rule" class="btn-pill-sm btn-pill-primary" title="Add a new custom rule to this set">+ Add Rule</button>
+        </div>
+        <div class="rules-card-subtitle">
+          Toggle rules on or off, adjust weights, or add team-specific policies.
+        </div>
+        <div class="rules-list" id="rules-list"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Native Bottom Stats Bar (Syncs live with swipe session via postMessage) -->
@@ -769,6 +1435,105 @@
     </button>
   </div>
 
+  <!-- Modal Dialog: Create / Edit Rule -->
+  <div class="modal-overlay" id="rule-modal">
+    <div class="modal-dialog">
+      <div class="modal-title" id="rule-modal-title">Create Custom Risk Rule</div>
+      <form id="rule-form" style="display:flex; flex-direction:column; gap:10px;">
+        <input type="hidden" id="rule-form-id" value="" />
+        
+        <div class="form-group">
+          <label for="rule-input-name">Rule Name</label>
+          <input type="text" id="rule-input-name" class="form-input" placeholder="e.g. Flag .env and secret changes" required />
+        </div>
+
+        <div class="form-group">
+          <label for="rule-input-category">Category</label>
+          <select id="rule-input-category" class="form-select">
+            <option value="diff">Diff Complexity (Lines & Files)</option>
+            <option value="config">Configuration & Lockfiles</option>
+            <option value="security">Security & Credentials</option>
+            <option value="contributor">Contributor Track Record</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="rule-input-condition">Condition Type</label>
+          <select id="rule-input-condition" class="form-select">
+            <option value="lines_changed">Lines Changed > Threshold</option>
+            <option value="files_changed">Files Changed > Threshold</option>
+            <option value="filename_pattern">File Name Matches Regex / Pattern</option>
+            <option value="missing_tests">Missing Test Files (Files > Threshold)</option>
+            <option value="title_keyword">PR Title Matches Keyword / Regex</option>
+            <option value="short_description">PR Description is Short (< Min Chars)</option>
+            <option value="first_time_contributor">First-time Contributor (0 prior PRs)</option>
+            <option value="new_contributor">New Contributor (< Max Prior PRs)</option>
+            <option value="low_merge_rate">Low Merge Rate (< % Threshold)</option>
+            <option value="small_pr">Micro PR Discount (< Max Lines)</option>
+            <option value="trusted_contributor">Trusted Author Discount (>= Merged PRs)</option>
+          </select>
+        </div>
+
+        <!-- Dynamic Params -->
+        <div class="form-group" id="group-param-threshold">
+          <label for="rule-input-threshold" id="label-param-threshold">Threshold Number</label>
+          <input type="number" id="rule-input-threshold" class="form-input" value="300" />
+        </div>
+
+        <div class="form-group" id="group-param-pattern" style="display:none;">
+          <label for="rule-input-pattern" id="label-param-pattern">Regex Pattern</label>
+          <input type="text" id="rule-input-pattern" class="form-input" placeholder="e.g. (\.env|secrets?|credentials?)" />
+        </div>
+
+        <div class="form-group">
+          <label for="rule-input-points">Risk Score Points Impact (+ or -)</label>
+          <input type="number" id="rule-input-points" class="form-input" value="15" placeholder="e.g. 20 (adds risk) or -10 (discounts risk)" required />
+        </div>
+
+        <div class="form-group">
+          <label for="rule-input-reason">Reason Description Message</label>
+          <input type="text" id="rule-input-reason" class="form-input" placeholder="e.g. Touches sensitive credentials: {matches}" value="Rule condition met ({value})" required />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-rule" class="btn-pill-sm">Cancel</button>
+          <button type="submit" id="btn-save-rule" class="btn-pill-sm btn-pill-primary">Save Rule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Dialog: Create New Rule Set -->
+  <div class="modal-overlay" id="ruleset-modal">
+    <div class="modal-dialog">
+      <div class="modal-title">New Risk Rule Set</div>
+      <form id="ruleset-form" style="display:flex; flex-direction:column; gap:10px;">
+        <div class="form-group">
+          <label for="ruleset-input-name">Rule Set Name</label>
+          <input type="text" id="ruleset-input-name" class="form-input" placeholder="e.g. Backend Production Rules" required />
+        </div>
+        <div class="form-group">
+          <label for="ruleset-input-desc">Description</label>
+          <input type="text" id="ruleset-input-desc" class="form-input" placeholder="e.g. Strict compliance rules for payment and auth APIs" />
+        </div>
+        <div class="form-group">
+          <label for="ruleset-base-template">Base Template</label>
+          <select id="ruleset-base-template" class="form-select">
+            <option value="litigo-standard">Litigo Standard Engine</option>
+            <option value="strict-security">Strict Security & Compliance</option>
+            <option value="fast-startup">Fast Startup & Low Friction</option>
+            <option value="empty">Blank (No Rules)</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-ruleset" class="btn-pill-sm">Cancel</button>
+          <button type="submit" class="btn-pill-sm btn-pill-primary">Create Set</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="rules-engine.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

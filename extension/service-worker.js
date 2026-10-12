@@ -100,15 +100,18 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   }
 });
 
-// Allow content scripts to trigger sidepanel opening
+// Allow content scripts to trigger sidepanel opening and mode switching
 chrome.runtime.onMessage.addListener(async (message, sender) => {
   if (message.type === "TRIGGER_OPEN_SIDEPANEL") {
     const tabId = sender.tab?.id;
     const windowId = sender.tab?.windowId;
     if (tabId) {
-      chrome.sidePanel.open({ tabId }).catch(() => {
-        if (windowId) chrome.sidePanel.open({ windowId }).catch(() => {});
-      });
+      try {
+        await chrome.sidePanel.open({ tabId });
+      } catch {
+        if (windowId) await chrome.sidePanel.open({ windowId }).catch(() => {});
+      }
     }
   }
 });
+
